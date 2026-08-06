@@ -1,3 +1,4 @@
+from mangum import Mangum
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -559,3 +560,6 @@ def model_performance(request: Request):
         },
         "rounds": _perf_by_round,
     }
+
+# Handler para AWS Lambda
+handler = Mangum(app)

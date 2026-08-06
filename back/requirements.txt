@@ -10,3 +10,4 @@ optuna==3.6.1
 shap==0.45.1
 python-multipart==0.0.9
 slowapi==0.1.9
+mangum==0.17.0
