@@ -5,7 +5,7 @@ FROM public.ecr.aws/lambda/python:3.11
 COPY requirements.txt ${LAMBDA_TASK_ROOT}
 
 # Instalar dependencias de compilación y Python
-RUN dnf install -y gcc gcc-c++ make && \
+RUN yum install -y gcc gcc-c++ make && \
     pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
