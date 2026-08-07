@@ -9,7 +9,7 @@
 // ── CONFIGURACIÓN ────────────────────────────────────────────────────────
 const MATCHES_CSV_PATH = 'partidos_liga1_2026.csv';
 // Reemplaza con tu URL de Render una vez desplegado:
-const API_URL          = 'https://api.data-sport.win';
+const API_URL          = 'https://dvv1qn3cuk.execute-api.us-east-2.amazonaws.com/default/ligas-predictor-api';
 
 // Map de nombres de equipos del CSV → ID de Sofascore para los escudos
 const TEAM_IDS = {
