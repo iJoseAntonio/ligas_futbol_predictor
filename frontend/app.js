@@ -565,10 +565,18 @@ async function renderPredictionsTab(round) {
 
   container.innerHTML = html;
 
-  // Reintentar los que fallaron (hasta 3 veces, esperando entre intentos)
-  const failedIndexes = preds.map((p, i) => p ? null : i).filter(i => i !== null);
-  if (failedIndexes.length > 0) {
-    retryPredictions(round, matches, results, failedIndexes, 1);
+  // Reintentar predicciones fallidas (Lambda fría)
+  const failedPreds = preds.map((p, i) => p ? null : i).filter(i => i !== null);
+  if (failedPreds.length > 0) {
+    retryPredictions(round, matches, results, failedPreds, 1);
+  }
+
+  // Reintentar resultados fallidos (checks ✓✗ que no cargaron)
+  const failedResults = results.map((r, i) =>
+    (matches[i].sh !== null && r === null) ? i : null
+  ).filter(i => i !== null);
+  if (failedResults.length > 0) {
+    retryResults(round, matches, preds, failedResults, 1);
   }
 }
 
@@ -578,7 +586,6 @@ async function renderPredictionsTab(round) {
  */
 async function retryPredictions(round, matches, results, failedIndexes, attempt) {
   if (attempt > 3) {
-    // Después de 3 intentos, muestra mensaje discreto
     failedIndexes.forEach(i => {
       const card = document.getElementById(`pred-card-${round}-${i}`);
       if (card) {
@@ -590,15 +597,13 @@ async function retryPredictions(round, matches, results, failedIndexes, attempt)
     return;
   }
 
-  // Esperar antes de reintentar (2s, 4s, 6s)
   await new Promise(resolve => setTimeout(resolve, attempt * 2000));
 
-  // Limpiar caché para los fallidos y reintentar
   const stillFailed = [];
   for (const i of failedIndexes) {
     const m = matches[i];
     const cacheKey = `${m.homeName}|${m.awayName}|${m.rawDate || ''}`;
-    delete predCache[cacheKey]; // forzar nuevo fetch
+    delete predCache[cacheKey];
 
     const pred = await getPrediction(m);
     if (pred) {
@@ -616,6 +621,38 @@ async function retryPredictions(round, matches, results, failedIndexes, attempt)
 
   if (stillFailed.length > 0) {
     retryPredictions(round, matches, results, stillFailed, attempt + 1);
+  }
+}
+
+/**
+ * Reintenta cargar los resultados reales (checks ✓✗) de partidos ya jugados
+ * cuya llamada a /match-result falló por Lambda fría.
+ */
+async function retryResults(round, matches, preds, failedIndexes, attempt) {
+  if (attempt > 3) return;
+
+  await new Promise(resolve => setTimeout(resolve, attempt * 2000));
+
+  const stillFailed = [];
+  for (const i of failedIndexes) {
+    const m = matches[i];
+    const resultCacheKey = `result|${m.homeName}|${m.awayName}`;
+    delete predCache[resultCacheKey]; // forzar nuevo fetch
+
+    const result = await getMatchResult(m);
+    if (result && preds[i]) {
+      const card = document.getElementById(`pred-card-${round}-${i}`);
+      if (card) {
+        // Solo actualiza si la predicción ya existe en la tarjeta
+        card.innerHTML = buildPredCardHTML(m, preds[i], result);
+      }
+    } else if (!result) {
+      stillFailed.push(i);
+    }
+  }
+
+  if (stillFailed.length > 0) {
+    retryResults(round, matches, preds, stillFailed, attempt + 1);
   }
 }
 
