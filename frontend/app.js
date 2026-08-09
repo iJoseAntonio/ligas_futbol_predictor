@@ -565,94 +565,77 @@ async function renderPredictionsTab(round) {
 
   container.innerHTML = html;
 
-  // Reintentar predicciones fallidas (Lambda fría)
-  const failedPreds = preds.map((p, i) => p ? null : i).filter(i => i !== null);
-  if (failedPreds.length > 0) {
-    retryPredictions(round, matches, results, failedPreds, 1);
-  }
+  // Lanzar reintentos individuales para tarjetas que no cargaron completamente
+  matches.forEach((m, i) => {
+    const hasPred = !!preds[i];
+    const needsResult = m.sh !== null;
+    const hasResult = !!results[i];
 
-  // Reintentar resultados fallidos (checks ✓✗ que no cargaron)
-  const failedResults = results.map((r, i) =>
-    (matches[i].sh !== null && r === null) ? i : null
-  ).filter(i => i !== null);
-  if (failedResults.length > 0) {
-    retryResults(round, matches, preds, failedResults, 1);
-  }
+    if (!hasPred || (needsResult && !hasResult)) {
+      retryCard(round, m, i, 1);
+    }
+  });
 }
 
 /**
- * Reintenta cargar las predicciones fallidas de forma secuencial.
- * Cada intento espera (attempt * 2) segundos antes de reintentar.
+ * Gestiona de forma unificada el reintento de carga de una tarjeta de partido,
+ * ya sea que le falte la predicción o los checks de resultados reales.
+ * Reintenta hasta 3 veces con tiempo de espera incremental.
  */
-async function retryPredictions(round, matches, results, failedIndexes, attempt) {
+async function retryCard(round, m, i, attempt) {
   if (attempt > 3) {
-    failedIndexes.forEach(i => {
-      const card = document.getElementById(`pred-card-${round}-${i}`);
-      if (card) {
-        card.innerHTML = `<div style="padding:14px;color:var(--text3);font-size:12px;text-align:center">
-                           ${matches[i].homeName} vs ${matches[i].awayName} — sin datos históricos suficientes
-                         </div>`;
-      }
-    });
+    // Si tras 3 intentos no cargó la predicción, mostrar error
+    const card = document.getElementById(`pred-card-${round}-${i}`);
+    if (card && card.querySelector('.spinner')) {
+      card.innerHTML = `<div style="padding:14px;color:var(--text3);font-size:12px;text-align:center">
+                         ${m.homeName} vs ${m.awayName} — sin datos del modelo
+                       </div>`;
+    }
     return;
   }
 
+  // Espera incremental (2s, 4s, 6s)
   await new Promise(resolve => setTimeout(resolve, attempt * 2000));
 
-  const stillFailed = [];
-  for (const i of failedIndexes) {
-    const m = matches[i];
-    const cacheKey = `${m.homeName}|${m.awayName}|${m.rawDate || ''}`;
-    delete predCache[cacheKey];
+  // Obtener estado actual (de caché si ya se cargó en un intento previo)
+  const predKey = `${m.homeName}|${m.awayName}|${m.rawDate || ''}`;
+  const resultKey = `result|${m.homeName}|${m.awayName}`;
 
-    const pred = await getPrediction(m);
-    if (pred) {
-      const result = results[i] !== undefined ? results[i] : (m.sh !== null ? await getMatchResult(m) : null);
-      const card = document.getElementById(`pred-card-${round}-${i}`);
-      if (card) {
-        card.style.animationDelay = '0s';
-        card.innerHTML = buildPredCardHTML(m, pred, result);
-        card.classList.add('pred-card-loaded');
-      }
-    } else {
-      stillFailed.push(i);
+  let pred = predCache[predKey];
+  let result = m.sh !== null ? predCache[resultKey] : null;
+
+  let updated = false;
+
+  // Si no tenemos la predicción, intentamos pedirla
+  if (!pred) {
+    delete predCache[predKey]; // forzar limpieza por seguridad
+    pred = await getPrediction(m);
+    if (pred) updated = true;
+  }
+
+  // Si es un partido finalizado y no tenemos el resultado real (checks)
+  if (m.sh !== null && !result) {
+    delete predCache[resultKey]; // forzar limpieza por seguridad
+    result = await getMatchResult(m);
+    if (result) updated = true;
+  }
+
+  // Si obtuvimos algo nuevo y ya tenemos como mínimo la predicción, actualizamos la tarjeta
+  if (updated && pred) {
+    const card = document.getElementById(`pred-card-${round}-${i}`);
+    if (card) {
+      card.style.animationDelay = '0s';
+      card.innerHTML = buildPredCardHTML(m, pred, result);
+      card.classList.add('pred-card-loaded');
     }
   }
 
-  if (stillFailed.length > 0) {
-    retryPredictions(round, matches, results, stillFailed, attempt + 1);
-  }
-}
+  // Si todavía falta algo, volvemos a programar un reintento
+  const stillNeedsPred = !pred;
+  const stillNeedsResult = m.sh !== null && !result;
 
-/**
- * Reintenta cargar los resultados reales (checks ✓✗) de partidos ya jugados
- * cuya llamada a /match-result falló por Lambda fría.
- */
-async function retryResults(round, matches, preds, failedIndexes, attempt) {
-  if (attempt > 3) return;
-
-  await new Promise(resolve => setTimeout(resolve, attempt * 2000));
-
-  const stillFailed = [];
-  for (const i of failedIndexes) {
-    const m = matches[i];
-    const resultCacheKey = `result|${m.homeName}|${m.awayName}`;
-    delete predCache[resultCacheKey]; // forzar nuevo fetch
-
-    const result = await getMatchResult(m);
-    if (result && preds[i]) {
-      const card = document.getElementById(`pred-card-${round}-${i}`);
-      if (card) {
-        // Solo actualiza si la predicción ya existe en la tarjeta
-        card.innerHTML = buildPredCardHTML(m, preds[i], result);
-      }
-    } else if (!result) {
-      stillFailed.push(i);
-    }
-  }
-
-  if (stillFailed.length > 0) {
-    retryResults(round, matches, preds, stillFailed, attempt + 1);
+  if (stillNeedsPred || stillNeedsResult) {
+    retryCard(round, m, i, attempt + 1);
   }
 }
 
