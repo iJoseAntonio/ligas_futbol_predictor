@@ -19,8 +19,7 @@ limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(
     title="Liga 1 Perú — Predictor Multi-Modelo",
     description="Predice xG>=1.5, Tiros>4 y Goles>=2 por equipo",
-    version="3.0.0",
-    root_path="/default/ligas-predictor-api"
+    version="3.0.0"
 )
 
 app.state.limiter = limiter
