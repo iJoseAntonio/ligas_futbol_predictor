@@ -10,6 +10,9 @@ import numpy as np
 import os
 import re
 import json
+import io
+import boto3
+from botocore.exceptions import ClientError, NoCredentialsError
 
 limiter = Limiter(key_func=get_remote_address)
 
@@ -34,6 +37,10 @@ MODEL_XG_PATH    = "modelos/corregidos/Goles_Esperadas/modelo_xgboost_liga1_xg.p
 MODEL_TIROS_PATH = "modelos/corregidos/Tiros_Puerta/modelo_xgboost_liga1_tiros.pkl"
 MODEL_GOLES_PATH = "modelos/corregidos/Goles/modelo_xgboost_liga1_goles.pkl"
 DATA_PATH        = "data/bd_liga1.csv"
+
+# Configuración de S3 (se lee del entorno para mayor flexibilidad)
+S3_BUCKET = os.environ.get("S3_BUCKET", "liga1-predictor-data")
+S3_KEY    = os.environ.get("S3_KEY",    "bd_liga1.csv")
 
 modelo_xg      = None
 modelo_tiros   = None
@@ -91,18 +98,42 @@ def cargar_recursos():
         else:
             print(f"ADVERTENCIA: {path} no encontrado.")
 
-    if os.path.exists(DATA_PATH):
-        try:
-            df_historico = pd.read_csv(DATA_PATH, sep=';', encoding='utf-8-sig')
-            df_historico.columns = df_historico.columns.str.strip()
-            df_historico['fecha'] = pd.to_datetime(
-                df_historico['fecha'], format='%d/%m/%Y', errors='coerce'
-            )
-            print(f"Datos históricos cargados: {len(df_historico)} partidos.")
-        except Exception as e:
-            print(f"ERROR cargando {DATA_PATH}: {e}")
-    else:
-        print(f"ADVERTENCIA: {DATA_PATH} no encontrado.")
+    # ── Cargar CSV de datos históricos ─────────────────────────────────────
+    # Intenta primero desde S3; si falla, cae al archivo local (fallback).
+    csv_cargado = False
+
+    try:
+        print(f"Intentando cargar {S3_KEY} desde S3 bucket '{S3_BUCKET}'...")
+        s3_client = boto3.client('s3')
+        obj = s3_client.get_object(Bucket=S3_BUCKET, Key=S3_KEY)
+        csv_bytes = obj['Body'].read()
+        df_historico = pd.read_csv(
+            io.BytesIO(csv_bytes), sep=';', encoding='utf-8-sig'
+        )
+        df_historico.columns = df_historico.columns.str.strip()
+        df_historico['fecha'] = pd.to_datetime(
+            df_historico['fecha'], format='%d/%m/%Y', errors='coerce'
+        )
+        csv_cargado = True
+        print(f"✅ Datos históricos cargados desde S3: {len(df_historico)} partidos.")
+    except (ClientError, NoCredentialsError) as e:
+        print(f"⚠️  No se pudo cargar desde S3: {e}. Usando archivo local como fallback.")
+    except Exception as e:
+        print(f"⚠️  Error inesperado cargando desde S3: {e}. Usando archivo local como fallback.")
+
+    if not csv_cargado:
+        if os.path.exists(DATA_PATH):
+            try:
+                df_historico = pd.read_csv(DATA_PATH, sep=';', encoding='utf-8-sig')
+                df_historico.columns = df_historico.columns.str.strip()
+                df_historico['fecha'] = pd.to_datetime(
+                    df_historico['fecha'], format='%d/%m/%Y', errors='coerce'
+                )
+                print(f"✅ Datos históricos cargados desde archivo local: {len(df_historico)} partidos.")
+            except Exception as e:
+                print(f"❌ ERROR cargando {DATA_PATH}: {e}")
+        else:
+            print(f"❌ ADVERTENCIA: {DATA_PATH} no encontrado y S3 no disponible.")
 
     _precompute_performance()
 
