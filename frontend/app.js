@@ -550,8 +550,13 @@ async function renderPredictionsTab(round) {
   const html = matches.map((m, i) => {
     const pred = preds[i];
     if (!pred) {
-      return `<div class="pred-card" id="pred-card-${round}-${i}" style="padding:14px;color:var(--text3);font-size:12px;
-              text-align:center">${m.homeName} vs ${m.awayName} — sin datos del modelo</div>`;
+      // Muestra spinner individual; retryPredictions lo reemplazará cuando cargue
+      return `<div class="pred-card" id="pred-card-${round}-${i}" style="padding:20px;text-align:center">
+                <div style="display:flex;align-items:center;justify-content:center;gap:10px;color:var(--text3);font-size:12px">
+                  <div class="spinner" style="width:16px;height:16px;border-width:2px"></div>
+                  <span>${m.homeName} vs ${m.awayName}</span>
+                </div>
+              </div>`;
     }
     return `<div class="pred-card" id="pred-card-${round}-${i}" style="animation-delay:${i * 0.05}s">
               ${buildPredCardHTML(m, pred, results[i])}
@@ -560,7 +565,60 @@ async function renderPredictionsTab(round) {
 
   container.innerHTML = html;
 
+  // Reintentar los que fallaron (hasta 3 veces, esperando entre intentos)
+  const failedIndexes = preds.map((p, i) => p ? null : i).filter(i => i !== null);
+  if (failedIndexes.length > 0) {
+    retryPredictions(round, matches, results, failedIndexes, 1);
+  }
 }
+
+/**
+ * Reintenta cargar las predicciones fallidas de forma secuencial.
+ * Cada intento espera (attempt * 2) segundos antes de reintentar.
+ */
+async function retryPredictions(round, matches, results, failedIndexes, attempt) {
+  if (attempt > 3) {
+    // Después de 3 intentos, muestra mensaje discreto
+    failedIndexes.forEach(i => {
+      const card = document.getElementById(`pred-card-${round}-${i}`);
+      if (card) {
+        card.innerHTML = `<div style="padding:14px;color:var(--text3);font-size:12px;text-align:center">
+                           ${matches[i].homeName} vs ${matches[i].awayName} — sin datos históricos suficientes
+                         </div>`;
+      }
+    });
+    return;
+  }
+
+  // Esperar antes de reintentar (2s, 4s, 6s)
+  await new Promise(resolve => setTimeout(resolve, attempt * 2000));
+
+  // Limpiar caché para los fallidos y reintentar
+  const stillFailed = [];
+  for (const i of failedIndexes) {
+    const m = matches[i];
+    const cacheKey = `${m.homeName}|${m.awayName}|${m.rawDate || ''}`;
+    delete predCache[cacheKey]; // forzar nuevo fetch
+
+    const pred = await getPrediction(m);
+    if (pred) {
+      const result = results[i] !== undefined ? results[i] : (m.sh !== null ? await getMatchResult(m) : null);
+      const card = document.getElementById(`pred-card-${round}-${i}`);
+      if (card) {
+        card.style.animationDelay = '0s';
+        card.innerHTML = buildPredCardHTML(m, pred, result);
+        card.classList.add('pred-card-loaded');
+      }
+    } else {
+      stillFailed.push(i);
+    }
+  }
+
+  if (stillFailed.length > 0) {
+    retryPredictions(round, matches, results, stillFailed, attempt + 1);
+  }
+}
+
 
 function buildPredCardHTML(m, data, result = null) {
   const finished = m.sh !== null;
