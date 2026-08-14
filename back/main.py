@@ -114,15 +114,18 @@ def cargar_recursos():
             
             # Limpiar nombres de columnas y parsear fechas
             df_historico.columns = df_historico.columns.str.strip()
-            df_historico['fecha'] = pd.to_datetime(
+            
+            # Intentar parsear de forma segura usando una variable temporal
+            fechas_temp = pd.to_datetime(
                 df_historico['fecha'], format='%Y-%m-%d', errors='coerce'
             )
-            # Si el parseo anterior falla porque la fecha vino como string formato DD/MM/YYYY
-            if df_historico['fecha'].isnull().sum() > len(df_historico) * 0.5:
-                df_historico['fecha'] = pd.to_datetime(
+            # Si fallan la mayoría de registros, intentar con formato DD/MM/YYYY
+            if fechas_temp.isnull().sum() > len(df_historico) * 0.5:
+                fechas_temp = pd.to_datetime(
                     df_historico['fecha'], format='%d/%m/%Y', errors='coerce'
                 )
-                
+            
+            df_historico['fecha'] = fechas_temp
             datos_cargados = True
             print(f"✅ Datos históricos cargados desde RDS: {len(df_historico)} partidos.")
         except Exception as e:
