@@ -13,6 +13,7 @@ import json
 import io
 import boto3
 from botocore.exceptions import ClientError, NoCredentialsError
+from sqlalchemy import create_engine
 
 limiter = Limiter(key_func=get_remote_address)
 
@@ -40,6 +41,9 @@ DATA_PATH        = "data/bd_liga1.csv"
 # Configuración de S3 (se lee del entorno para mayor flexibilidad)
 S3_BUCKET = os.environ.get("S3_BUCKET", "liga1-predictor-data")
 S3_KEY    = os.environ.get("S3_KEY",    "bd_liga1.csv")
+
+# Configuración de RDS PostgreSQL
+DATABASE_URL = os.environ.get("DATABASE_URL") # postgresql://user:pass@host:5432/dbname
 
 modelo_xg      = None
 modelo_tiros   = None
@@ -97,30 +101,56 @@ def cargar_recursos():
         else:
             print(f"ADVERTENCIA: {path} no encontrado.")
 
-    # ── Cargar CSV de datos históricos ─────────────────────────────────────
-    # Intenta primero desde S3; si falla, cae al archivo local (fallback).
-    csv_cargado = False
+    # ── Cargar datos históricos ───────────────────────────────────────────
+    # Intenta cargar en orden: 1. RDS Postgres, 2. S3 Bucket, 3. Local CSV
+    datos_cargados = False
 
-    try:
-        print(f"Intentando cargar {S3_KEY} desde S3 bucket '{S3_BUCKET}'...")
-        s3_client = boto3.client('s3')
-        obj = s3_client.get_object(Bucket=S3_BUCKET, Key=S3_KEY)
-        csv_bytes = obj['Body'].read()
-        df_historico = pd.read_csv(
-            io.BytesIO(csv_bytes), sep=';', encoding='utf-8-sig'
-        )
-        df_historico.columns = df_historico.columns.str.strip()
-        df_historico['fecha'] = pd.to_datetime(
-            df_historico['fecha'], format='%d/%m/%Y', errors='coerce'
-        )
-        csv_cargado = True
-        print(f"✅ Datos históricos cargados desde S3: {len(df_historico)} partidos.")
-    except (ClientError, NoCredentialsError) as e:
-        print(f"⚠️  No se pudo cargar desde S3: {e}. Usando archivo local como fallback.")
-    except Exception as e:
-        print(f"⚠️  Error inesperado cargando desde S3: {e}. Usando archivo local como fallback.")
+    # 1. Intentar desde RDS PostgreSQL
+    if DATABASE_URL:
+        try:
+            print("Intentando conectar a AWS RDS PostgreSQL...")
+            engine = create_engine(DATABASE_URL)
+            df_historico = pd.read_sql("SELECT * FROM partidos_liga1", engine)
+            
+            # Limpiar nombres de columnas y parsear fechas
+            df_historico.columns = df_historico.columns.str.strip()
+            df_historico['fecha'] = pd.to_datetime(
+                df_historico['fecha'], format='%Y-%m-%d', errors='coerce'
+            )
+            # Si el parseo anterior falla porque la fecha vino como string formato DD/MM/YYYY
+            if df_historico['fecha'].isnull().sum() > len(df_historico) * 0.5:
+                df_historico['fecha'] = pd.to_datetime(
+                    df_historico['fecha'], format='%d/%m/%Y', errors='coerce'
+                )
+                
+            datos_cargados = True
+            print(f"✅ Datos históricos cargados desde RDS: {len(df_historico)} partidos.")
+        except Exception as e:
+            print(f"⚠️  No se pudo conectar a RDS: {e}. Pasando a S3 como fallback.")
 
-    if not csv_cargado:
+    # 2. Intentar desde S3
+    if not datos_cargados:
+        try:
+            print(f"Intentando cargar {S3_KEY} desde S3 bucket '{S3_BUCKET}'...")
+            s3_client = boto3.client('s3')
+            obj = s3_client.get_object(Bucket=S3_BUCKET, Key=S3_KEY)
+            csv_bytes = obj['Body'].read()
+            df_historico = pd.read_csv(
+                io.BytesIO(csv_bytes), sep=';', encoding='utf-8-sig'
+            )
+            df_historico.columns = df_historico.columns.str.strip()
+            df_historico['fecha'] = pd.to_datetime(
+                df_historico['fecha'], format='%d/%m/%Y', errors='coerce'
+            )
+            datos_cargados = True
+            print(f"✅ Datos históricos cargados desde S3: {len(df_historico)} partidos.")
+        except (ClientError, NoCredentialsError) as e:
+            print(f"⚠️  No se pudo cargar desde S3: {e}. Usando archivo local como fallback.")
+        except Exception as e:
+            print(f"⚠️  Error inesperado cargando desde S3: {e}. Usando archivo local como fallback.")
+
+    # 3. Intentar local
+    if not datos_cargados:
         if os.path.exists(DATA_PATH):
             try:
                 df_historico = pd.read_csv(DATA_PATH, sep=';', encoding='utf-8-sig')
@@ -132,7 +162,7 @@ def cargar_recursos():
             except Exception as e:
                 print(f"❌ ERROR cargando {DATA_PATH}: {e}")
         else:
-            print(f"❌ ADVERTENCIA: {DATA_PATH} no encontrado y S3 no disponible.")
+            print(f"❌ ADVERTENCIA: {DATA_PATH} no encontrado.")
 
     _precompute_performance()
 
