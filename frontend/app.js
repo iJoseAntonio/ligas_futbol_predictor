@@ -120,6 +120,7 @@ function isEmptyScore(v) {
 }
 
 let ROUND_META = {};   // globalRound -> { stage, displayNum }
+let predRenderSeq = 0; // evita que una respuesta tardía de una jornada anterior sobrescriba la actual
 
 function loadMatchesCSV() {
   Papa.parse(MATCHES_CSV_PATH, {
@@ -525,6 +526,7 @@ function isPredTabActive() {
 
 // ── PREDICCIONES TAB ──────────────────────────────────────────────────────
 async function renderPredictionsTab(round) {
+  const seq = ++predRenderSeq;
   const container = document.getElementById('pred-tab-content');
   const titleEl = document.getElementById('pred-tab-round');
   if (!container) return;
@@ -546,6 +548,10 @@ async function renderPredictionsTab(round) {
     Promise.all(matches.map(m => getPrediction(m))),
     Promise.all(matches.map(m => m.sh !== null ? getMatchResult(m) : Promise.resolve(null))),
   ]);
+
+  // Si mientras esperábamos la API el usuario cambió de jornada, esta respuesta
+  // ya quedó obsoleta: no pisar el contenido de la jornada que se ve ahora.
+  if (seq !== predRenderSeq) return;
 
   const html = matches.map((m, i) => {
     const pred = preds[i];
