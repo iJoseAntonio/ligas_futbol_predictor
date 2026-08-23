@@ -5,7 +5,7 @@ Tesis — UNMSM, Facultad de Ingeniería de Sistemas e Informática.
 
 ## Estructura
 ```
-├── back/                        ← Backend (Render Web Service)
+├── back/                        ← Backend (AWS Lambda, contenedor publicado en ECR)
 │   ├── main.py                   ← API FastAPI
 │   ├── requirements.txt
 │   ├── .python-version
@@ -23,7 +23,7 @@ Tesis — UNMSM, Facultad de Ingeniería de Sistemas e Informática.
 │       └── legacy/                ← Modelos anteriores (Optuna optimizado contra
 │                                     test, conservados como referencia histórica)
 │
-├── frontend/                    ← Sitio estático (Azure Static Web Apps)
+├── frontend/                    ← Sitio estático (S3 + CloudFront)
 │   ├── index.html
 │   ├── app.js
 │   ├── styles.css
@@ -46,10 +46,21 @@ Tesis — UNMSM, Facultad de Ingeniería de Sistemas e Informática.
 > cruzada temporal (`TimeSeriesSplit`) dentro del conjunto de entrenamiento, evitando
 > ese problema — son los que usa la API en producción.
 
-> **Despliegue:** el backend vive en `back/` y se despliega en Render con **Root
-> Directory = `back`** (ver sección Render más abajo). El frontend (`frontend/`) se
-> despliega por separado en Azure Static Web Apps (ver
-> `.github/workflows/azure-static-web-apps-*.yml`, `app_location: "/frontend"`).
+> **Despliegue:** todo el proyecto corre en AWS, desplegado automáticamente por GitHub
+> Actions en cada push a `main`.
+> - **Backend:** `back/Dockerfile` (base `public.ecr.aws/lambda/python:3.12`) se
+>   construye y publica en **Amazon ECR** (repo `ligas-predictores`, `us-east-2`), y se
+>   despliega como función **AWS Lambda** (`futbol-ligas-predictor`) expuesta vía
+>   **API Gateway**. Automatizado por `.github/workflows/deploy-aws.yml`.
+> - **Frontend:** `frontend/` se sincroniza al bucket **S3** `s3-bucket-futbol-ligas-web`
+>   (`us-east-1`) con invalidación de caché de **CloudFront**
+>   (`d172q11bxscxd2.cloudfront.net`, el mismo dominio usado como `API_URL` en
+>   `app.js`). Automatizado por `.github/workflows/deploy-frontend.yml`.
+> - **Datos:** al arrancar, `main.py` carga el histórico en cascada — primero
+>   **RDS PostgreSQL** (`DATABASE_URL`), si falla intenta **S3**
+>   (`S3_BUCKET`/`S3_KEY`, vía `boto3`), y si tampoco hay acceso cae al **CSV local**
+>   empaquetado en la imagen. `back/migrate_to_postgres.py` es el script para poblar
+>   RDS desde el CSV histórico.
 
 ## Ciclo de actualización por jornada
 Reentrenar los 3 modelos corriendo `notebooks/Ingenieria_Caracteristicas_Modelos_Predictivos.ipynb`
@@ -65,8 +76,10 @@ git push
 > por la API). Cada vez que actualices este archivo, cópialo a **ambas** rutas —
 > si solo actualizas una, el fixture quedará desincronizado entre la API y el sitio.
 
-## Render — configuración
-- **Runtime:** Python 3
-- **Root Directory:** `back`
-- **Build Command:** `pip install -r requirements.txt`
-- **Start Command:** `uvicorn main:app --host 0.0.0.0 --port $PORT`
+## AWS — configuración
+- **Variables de entorno del backend (Lambda):**
+  - `DATABASE_URL` — cadena de conexión a RDS PostgreSQL (`postgresql://user:pass@host:5432/dbname`)
+  - `S3_BUCKET` — bucket con el CSV histórico de respaldo (default: `liga1-predictor-data`)
+  - `S3_KEY` — key del objeto CSV dentro del bucket (default: `bd_liga1.csv`)
+- **Credenciales:** la función Lambda usa su **rol de ejecución IAM** para acceder a S3 (no hay access keys en el código). El pipeline de CI/CD usa los secrets del repo `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` y `CLOUDFRONT_DISTRIBUTION_ID`.
+- **Despliegue:** no es manual — basta con hacer push a `main`/`master` y los workflows de GitHub Actions construyen y publican backend y frontend automáticamente.
