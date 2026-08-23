@@ -461,6 +461,7 @@ def match_result(
     request: Request,
     home: str = Query(..., description="Equipo local"),
     away: str = Query(..., description="Equipo visitante"),
+    fecha: str | None = Query(None, description="Fecha del partido DD/MM/YYYY"),
 ):
     if df_historico is None:
         raise HTTPException(status_code=503, detail="Datos no disponibles")
@@ -473,6 +474,13 @@ def match_result(
 
     if found.empty:
         raise HTTPException(status_code=404, detail=f"Partido no encontrado: {home} vs {away}")
+
+    if fecha:
+        parsed = pd.to_datetime(fecha, format='%d/%m/%Y', errors='coerce')
+        if pd.notna(parsed):
+            exact = found[found['fecha'] == parsed]
+            if not exact.empty:
+                found = exact
 
     row = found.sort_values('fecha', ascending=False).iloc[0]
 

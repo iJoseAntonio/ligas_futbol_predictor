@@ -353,12 +353,13 @@ function renderMatches(round) {
 
 // ── PREDICCIONES API ──────────────────────────────────────────────────────
 async function getMatchResult(m) {
-  const key = `result|${m.homeName}|${m.awayName}`;
+  const key = `result|${m.homeName}|${m.awayName}|${m.rawDate || ''}`;
   if (predCache[key]) return predCache[key];
   try {
     const url = `${API_URL}/match-result` +
       `?home=${encodeURIComponent(m.homeName)}` +
-      `&away=${encodeURIComponent(m.awayName)}`;
+      `&away=${encodeURIComponent(m.awayName)}` +
+      (m.rawDate ? `&fecha=${encodeURIComponent(m.rawDate)}` : '');
     const res = await fetch(url);
     if (!res.ok) return null;
     const data = await res.json();
@@ -605,7 +606,7 @@ async function retryCard(round, m, i, attempt) {
 
   // Obtener estado actual (de caché si ya se cargó en un intento previo)
   const predKey = `${m.homeName}|${m.awayName}|${m.rawDate || ''}`;
-  const resultKey = `result|${m.homeName}|${m.awayName}`;
+  const resultKey = `result|${m.homeName}|${m.awayName}|${m.rawDate || ''}`;
 
   let pred = predCache[predKey];
   let result = m.sh !== null ? predCache[resultKey] : null;
