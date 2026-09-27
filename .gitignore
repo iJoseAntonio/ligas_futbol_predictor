@@ -8,3 +8,5 @@ env_liga1/
 # Python cache
 __pycache__/
 *.pyc
+README_AWS.md
+README.md

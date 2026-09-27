@@ -9,7 +9,7 @@ on:
 
 
 env:
-  AWS_REGION:       us-east-2              # Región de tu ECR y Lambda
+  AWS_REGION:       us-east-1              # Región de tu ECR y Lambda
   ECR_REPOSITORY:   ligas-predictores      # Nombre de tu repositorio en ECR
   LAMBDA_FUNCTION:  futbol-ligas-predictor # Nombre de tu función Lambda
 

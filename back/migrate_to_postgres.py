@@ -1,15 +1,15 @@
 import os
 import sys
 import pandas as pd
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, Integer
 
 def migrate():
     # Pedir datos de conexión de forma interactiva
     print("=== MIGRACIÓN DE DATOS A RDS POSTGRESQL ===")
     host = input("1. Introduce el Endpoint de tu RDS (ej. xxxx.us-east-2.rds.amazonaws.com): ").strip()
-    password = input("2. Introduce la contraseña maestra de tu RDS: ").strip()
-    
-    user = "postgres"
+    user = input("2. Introduce el Master username (default: postgres): ").strip() or "postgres"
+    password = input("3. Introduce la contraseña maestra de tu RDS: ").strip()
+
     db_name = "postgres"  # RDS crea una base de datos por defecto llamada postgres
     port = 5432
     
@@ -42,7 +42,8 @@ def migrate():
             
         print("📤 Subiendo datos a la tabla 'partidos_liga1' (esto puede tardar unos segundos)...")
         # Subir el DataFrame a la tabla partidos_liga1
-        df.to_sql("partidos_liga1", engine, if_exists="replace", index=False)
+        df.to_sql("partidos_liga1", engine, if_exists="replace", index=False,
+                  dtype={"goles_local": Integer, "goles_visitante": Integer})
         print("🎉 ¡DATOS MIGRADOS CON ÉXITO A POSTGRESQL EN RDS!")
         
     except Exception as e:
