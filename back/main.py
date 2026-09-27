@@ -183,7 +183,8 @@ def _build_team_df(team_name: str, df_fuente: pd.DataFrame) -> pd.DataFrame | No
         row = {'fecha': m['fecha']}
         for col in COLS_STATS_CSV:
             val = m.get(f'{col}{suffix}', 0)
-            row[col] = pd.to_numeric(val, errors='coerce') or 0.0
+            num = pd.to_numeric(val, errors='coerce')
+            row[col] = num if pd.notna(num) else 0.0
         rows.append(row)
 
     if not rows:
@@ -330,7 +331,8 @@ def _precompute_performance():
                 continue
 
             def nv(col, s=sfx, r=match):
-                return pd.to_numeric(r.get(f'{col}{s}', 0), errors='coerce') or 0.0
+                num = pd.to_numeric(r.get(f'{col}{s}', 0), errors='coerce')
+                return num if pd.notna(num) else 0.0
 
             real_xg    = float(nv('Goles esperados (xG)'))
             real_tiros = int(nv('Tiros a puerta'))
@@ -486,7 +488,8 @@ def match_result(
 
     def team_stats(suffix: str) -> dict:
         def n(col):
-            return pd.to_numeric(row.get(f'{col}{suffix}', 0), errors='coerce') or 0.0
+            num = pd.to_numeric(row.get(f'{col}{suffix}', 0), errors='coerce')
+            return num if pd.notna(num) else 0.0
         goles = int(n('goles'))
         xg    = round(float(n('Goles esperados (xG)')), 2)
         tiros = int(n('Tiros a puerta'))
@@ -557,7 +560,8 @@ def team_rankings(request: Request):
                 teams[team] = {'xg': [], 'tiros': [], 'goles': [], 'tiros_tot': []}
 
             def nv(col, s=sfx, r=row):
-                return pd.to_numeric(r.get(f'{col}{s}', 0), errors='coerce') or 0.0
+                num = pd.to_numeric(r.get(f'{col}{s}', 0), errors='coerce')
+                return num if pd.notna(num) else 0.0
 
             xg      = nv('Goles esperados (xG)')
             tir     = nv('Tiros a puerta')
