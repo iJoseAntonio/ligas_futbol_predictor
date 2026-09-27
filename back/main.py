@@ -50,6 +50,7 @@ modelo_tiros   = None
 modelo_goles   = None
 df_historico   = None
 _perf_by_round = []
+_perf_computed = False
 
 # Columnas raw a extraer del CSV
 COLS_STATS_CSV = [
@@ -167,7 +168,8 @@ def cargar_recursos():
         else:
             print(f"❌ ADVERTENCIA: {DATA_PATH} no encontrado.")
 
-    _precompute_performance()
+    # _precompute_performance() se calcula de forma perezosa (ver /model-performance)
+    # para no bloquear el arranque de la Lambda con este cálculo pesado.
 
 
 def _build_team_df(team_name: str, df_fuente: pd.DataFrame) -> pd.DataFrame | None:
@@ -618,6 +620,11 @@ def shap_values_endpoint(request: Request):
 @app.get("/model-performance")
 @limiter.limit("60/minute")
 def model_performance(request: Request):
+    global _perf_computed
+    if not _perf_computed:
+        _precompute_performance()
+        _perf_computed = True
+
     if not _perf_by_round:
         return {
             "resumen": None,
