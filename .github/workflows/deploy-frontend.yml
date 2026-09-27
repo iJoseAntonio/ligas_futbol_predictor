@@ -11,7 +11,7 @@ on:
 
 env:
   AWS_REGION: us-east-1
-  S3_BUCKET: s3-bucket-futbol-ligas-web
+  S3_BUCKET: ligas-futbol-frontend
 
 jobs:
   deploy:

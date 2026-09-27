@@ -8,8 +8,7 @@
 
 // ── CONFIGURACIÓN ────────────────────────────────────────────────────────
 const MATCHES_CSV_PATH = 'partidos_liga1_2026.csv';
-// Reemplaza con tu URL de Render una vez desplegado:
-const API_URL          = 'https://d172q11bxscxd2.cloudfront.net';
+const API_URL          = 'https://a8nhjqfpfg.execute-api.us-east-1.amazonaws.com';
 
 // Map de nombres de equipos del CSV → ID de Sofascore para los escudos
 const TEAM_IDS = {
