@@ -569,7 +569,10 @@ def team_rankings(request: Request):
             tir     = nv('Tiros a puerta')
             gol     = nv('goles')
             tir_tot = nv('Tiros totales')
-            if xg > 0 or tir > 0:
+            posesion = nv('Posesión de pelota')
+            # Usamos posesión (siempre > 0 en un partido real) en vez de xG/tiros,
+            # que pueden ser legítimamente 0 en una actuación muy floja.
+            if posesion > 0:
                 teams[team]['xg'].append(xg)
                 teams[team]['tiros'].append(tir)
                 teams[team]['goles'].append(gol)
