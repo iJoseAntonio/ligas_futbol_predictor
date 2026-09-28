@@ -50,7 +50,6 @@ modelo_tiros   = None
 modelo_goles   = None
 df_historico   = None
 _perf_by_round = []
-_perf_computed = False
 
 # Columnas raw a extraer del CSV
 COLS_STATS_CSV = [
@@ -168,8 +167,9 @@ def cargar_recursos():
         else:
             print(f"❌ ADVERTENCIA: {DATA_PATH} no encontrado.")
 
-    # _precompute_performance() se calcula de forma perezosa (ver /model-performance)
-    # para no bloquear el arranque de la Lambda con este cálculo pesado.
+    # El rendimiento por ronda (/model-performance) se precalcula offline con
+    # precompute_performance.py, no aquí — el cálculo en vivo tarda ~30s y
+    # choca con el límite duro de 29-30s de API Gateway.
 
 
 def _build_team_df(team_name: str, df_fuente: pd.DataFrame) -> pd.DataFrame | None:
@@ -620,28 +620,38 @@ def shap_values_endpoint(request: Request):
 @app.get("/model-performance")
 @limiter.limit("60/minute")
 def model_performance(request: Request):
-    global _perf_computed
-    if not _perf_computed:
-        _precompute_performance()
-        _perf_computed = True
+    # Precalculado offline con precompute_performance.py (el calculo en vivo
+    # tarda ~30s y choca con el limite duro de API Gateway de 29-30s).
+    path = "modelos/model_performance.json"
+    if not os.path.exists(path):
+        return {
+            "resumen": None,
+            "rounds":  [],
+            "message": "Rendimiento no precalculado. Correr back/precompute_performance.py.",
+        }
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            rounds = json.load(f)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error leyendo model_performance.json: {e}")
 
-    if not _perf_by_round:
+    if not rounds:
         return {
             "resumen": None,
             "rounds":  [],
             "message": "Sin datos post-entrenamiento. Modelos entrenados hasta 27/04/2026.",
         }
-    xg_avg    = round(float(np.mean([r['xg_pct']    for r in _perf_by_round])), 1)
-    tiros_avg = round(float(np.mean([r['tiros_pct'] for r in _perf_by_round])), 1)
-    goles_avg = round(float(np.mean([r['goles_pct'] for r in _perf_by_round])), 1)
+    xg_avg    = round(float(np.mean([r['xg_pct']    for r in rounds])), 1)
+    tiros_avg = round(float(np.mean([r['tiros_pct'] for r in rounds])), 1)
+    goles_avg = round(float(np.mean([r['goles_pct'] for r in rounds])), 1)
     return {
         "resumen": {
             "xg_accuracy":    xg_avg,
             "tiros_accuracy": tiros_avg,
             "goles_accuracy": goles_avg,
-            "total_rondas":   len(_perf_by_round),
+            "total_rondas":   len(rounds),
         },
-        "rounds": _perf_by_round,
+        "rounds": rounds,
     }
 
 # Handler para AWS Lambda
