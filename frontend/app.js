@@ -504,20 +504,43 @@ function updateCountdown() {
 }
 
 // ── TABS ──────────────────────────────────────────────────────────────────
+const TAB_NAMES = ['clasificaciones', 'estadisticas', 'predicciones', 'rendimiento'];
+
+function activateTab(name, updateHash = true) {
+  if (!TAB_NAMES.includes(name)) return;
+
+  document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+  const tab    = document.querySelector(`.main-tab[data-tab="${name}"]`);
+  const target = document.getElementById(`tab-${name}`);
+  if (tab)    tab.classList.add('active');
+  if (target) target.classList.add('active');
+
+  if (name === 'predicciones') renderPredictionsTab(currentRound);
+  if (name === 'estadisticas' && !_statsLoaded) { renderEstadisticasTab(); _statsLoaded = true; }
+  if (name === 'rendimiento'  && !_rendLoaded)  { renderRendimientoTab();  _rendLoaded  = true; }
+
+  if (updateHash && window.location.hash.slice(1) !== name) {
+    window.location.hash = name;
+  }
+}
+
 function setupMainTabs() {
   document.querySelectorAll('.main-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-      tab.classList.add('active');
-      const target = document.getElementById(`tab-${tab.dataset.tab}`);
-      if (target) target.classList.add('active');
-      const name = tab.dataset.tab;
-      if (name === 'predicciones') renderPredictionsTab(currentRound);
-      if (name === 'estadisticas' && !_statsLoaded) { renderEstadisticasTab(); _statsLoaded = true; }
-      if (name === 'rendimiento'  && !_rendLoaded)  { renderRendimientoTab();  _rendLoaded  = true; }
-    });
+    tab.addEventListener('click', () => activateTab(tab.dataset.tab));
   });
+
+  // Soporte para el boton atras/adelante del navegador
+  window.addEventListener('hashchange', () => {
+    activateTab(window.location.hash.slice(1), false);
+  });
+
+  // Si se entra con un link directo a una pestana (ej. #estadisticas)
+  const initial = window.location.hash.slice(1);
+  if (TAB_NAMES.includes(initial) && initial !== 'clasificaciones') {
+    activateTab(initial, false);
+  }
 }
 
 function isPredTabActive() {
