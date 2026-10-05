@@ -51,6 +51,7 @@ let ROUND_MAX     = 17;
 const ROUND_MIN   = 1;
 let standingsData = [];
 let teamZoneMap    = {};   // equipo -> zona real (según tabla "Todos")
+let currentStage   = 'acumulado';   // 'acumulado' | 'Apertura' | 'Clausura'
 const predCache   = {};
 let _statsLoaded  = false;
 let _rendLoaded   = false;
@@ -1290,7 +1291,10 @@ function computeFilteredStandings(filter) {
     else               { t.pp++; t.forma.push('D'); }
   };
 
-  Object.values(MATCHES).forEach(roundMatches => {
+  Object.entries(MATCHES).forEach(([roundNum, roundMatches]) => {
+    const stage = (ROUND_META[roundNum] || {}).stage;
+    if (currentStage !== 'acumulado' && stage !== currentStage) return;
+
     roundMatches.forEach(m => {
       if (m.sh === null) return; // partido no jugado
 
@@ -1357,6 +1361,51 @@ function setupSubTabs() {
   });
 }
 
+// ── DROPDOWN DE ETAPA (Acumulado / Apertura / Clausura) ─────────────────────
+function setupClasDropdown() {
+  const dropdown = document.getElementById('clas-dropdown');
+  const menu     = document.getElementById('clas-menu');
+  const label    = document.getElementById('clas-stage-label');
+  if (!dropdown || !menu || !label) return;
+
+  const closeMenu = () => {
+    menu.hidden = true;
+    dropdown.classList.remove('open');
+  };
+
+  dropdown.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isOpen = !menu.hidden;
+    if (isOpen) {
+      closeMenu();
+    } else {
+      menu.hidden = false;
+      dropdown.classList.add('open');
+    }
+  });
+
+  menu.querySelectorAll('.clas-menu-item').forEach(item => {
+    item.addEventListener('click', (e) => {
+      e.stopPropagation();
+      currentStage = item.dataset.stage;
+
+      menu.querySelectorAll('.clas-menu-item').forEach(i => i.classList.remove('active'));
+      item.classList.add('active');
+      label.textContent = `Liga 1 2026, ${item.textContent}`;
+
+      closeMenu();
+
+      const activeSub = document.querySelector('.sub-tab.active');
+      const filter     = activeSub ? activeSub.dataset.filter : 'all';
+      standingsData = computeFilteredStandings('all');
+      teamZoneMap   = computeTeamZones(standingsData);
+      renderStandings(computeFilteredStandings(filter));
+    });
+  });
+
+  document.addEventListener('click', closeMenu);
+}
+
 
 function setupRoundNav() {
   document.getElementById('btn-prev').addEventListener('click', () => changeRound(-1));
@@ -1373,6 +1422,7 @@ function setupRoundNav() {
 document.addEventListener('DOMContentLoaded', () => {
   setupMainTabs();
   setupSubTabs();
+  setupClasDropdown();
   buildRoundSelect();
   setupRoundNav();
 

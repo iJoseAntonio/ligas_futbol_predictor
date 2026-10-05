@@ -83,10 +83,15 @@
       <!-- Clasificaciones panel -->
       <div id="tab-clasificaciones" class="tab-content active">
         <div class="clas-header">
-          <div class="clas-dropdown">
+          <div class="clas-dropdown" id="clas-dropdown">
             <img src="https://img.sofascore.com/api/v1/unique-tournament/406/image" alt="L1">
-            <span>Liga 1 2026</span>
+            <span id="clas-stage-label">Liga 1 2026, Acumulado</span>
             <span class="arrow">▼</span>
+            <div class="clas-menu" id="clas-menu" hidden>
+              <button class="clas-menu-item active" data-stage="acumulado">Acumulado</button>
+              <button class="clas-menu-item" data-stage="Apertura">Apertura</button>
+              <button class="clas-menu-item" data-stage="Clausura">Clausura</button>
+            </div>
           </div>
         </div>
         <div class="sub-tabs">
