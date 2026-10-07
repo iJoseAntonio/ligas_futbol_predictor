@@ -1653,6 +1653,45 @@ img { display: block; }
   text-align: center;
   flex: 1;
 }
+.stat-ratio-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  height: 56px;
+  margin-bottom: 14px;
+}
+.stat-ratio-side {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 118px;
+  flex-shrink: 0;
+}
+.stat-ratio-side .stat-val { flex: 0 0 auto; font-weight: 400; font-size: 14px; }
+.stat-donut {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
+.stat-donut svg { display: block; transform: rotate(-90deg); }
+/* El visitante se llena en sentido antihorario, como en Sofascore */
+.stat-donut-away svg { transform: rotate(-90deg) scaleY(-1); }
+.stat-donut circle { fill: none; stroke-width: 5; }
+.stat-donut-track { stroke: rgba(255, 255, 255, 0.12); }
+.stat-donut-home .stat-donut-fill { stroke: rgb(70, 194, 82); }
+.stat-donut-away .stat-donut-fill { stroke: rgb(122, 132, 255); }
+.stat-donut-pct {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 12px;
+  color: rgb(236, 237, 239);
+}
+
 .stat-bars {
   display: flex;
   gap: 4px;

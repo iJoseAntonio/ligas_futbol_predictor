@@ -498,7 +498,44 @@ const STAT_FIELD_LABELS = {
   saques_de_meta:          'Saques de meta',
 };
 
+const RATIO_RE = /^\s*(\d+)\s*\/\s*(\d+)\s*$/;
+
+function statDonutHtml(ratio, side) {
+  const [, ok, total] = ratio.match(RATIO_RE);
+  const pct = Number(total) > 0 ? Math.round((Number(ok) / Number(total)) * 100) : 0;
+  const r = 21.5;
+  const circ = 2 * Math.PI * r;
+  const filled = (pct / 100) * circ;
+  return `
+    <div class="stat-donut stat-donut-${side}">
+      <svg viewBox="0 0 48 48" width="100%" height="100%">
+        <circle cx="24" cy="24" r="${r}" class="stat-donut-track"></circle>
+        <circle cx="24" cy="24" r="${r}" class="stat-donut-fill" stroke-dasharray="${filled} ${circ - filled}"></circle>
+      </svg>
+      <span class="stat-donut-pct">${pct}%</span>
+    </div>`;
+}
+
+// Estilo Sofascore para estadisticas tipo "132/177": texto + dona con el % de acierto
+function statRatioRow(label, homeVal, awayVal) {
+  return `
+    <div class="stat-ratio-row">
+      <div class="stat-ratio-side">
+        <span class="stat-val stat-val-home">${homeVal}</span>
+        ${statDonutHtml(homeVal, 'home')}
+      </div>
+      <span class="stat-label">${label}</span>
+      <div class="stat-ratio-side">
+        ${statDonutHtml(awayVal, 'away')}
+        <span class="stat-val stat-val-away">${awayVal}</span>
+      </div>
+    </div>`;
+}
+
 function statBarRow(label, homeVal, awayVal) {
+  if (RATIO_RE.test(String(homeVal)) && RATIO_RE.test(String(awayVal))) {
+    return statRatioRow(label, homeVal, awayVal);
+  }
   // Si alguno de los dos no es numero (ej. "115/137"), se muestra como texto sin barra
   const homeNum = typeof homeVal === 'number' ? homeVal : parseFloat(homeVal);
   const awayNum = typeof awayVal === 'number' ? awayVal : parseFloat(awayVal);
