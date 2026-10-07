@@ -558,8 +558,7 @@ def match_stats(
             "pases":               "Pases",
             "pases_precisos":      "Pases precisos",
             "saques_de_banda":     "Saques de banda",
-            "pases_ultimo_tercio": "Pases al ultimo tercio",
-            "pases_en_ultimo_tercio": "Pases en ultimo tercio",
+            "pases_ultimo_tercio": "Pases al ultimo tercio"
         },
         "defensa": {
             "entradas":            "Entradas",
@@ -581,10 +580,15 @@ def match_stats(
         },
     }
 
+    def nv_text(col, suffix):
+        val = row.get(f'{col}{suffix}')
+        return str(val) if pd.notna(val) else "0/0"
+
     def team_block(suffix):
         block = {"posesion": round(nv('Posesión de pelota', suffix) * 100, 1)}
         for group_name, fields in GROUPS.items():
             block[group_name] = {key: nv(col, suffix) for key, col in fields.items()}
+        block["pases"]["pases_en_ultimo_tercio"] = nv_text("Pases en ultimo tercio", suffix)
         return block
 
     return {
