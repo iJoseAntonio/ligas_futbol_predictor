@@ -1696,8 +1696,8 @@ img { display: block; }
   display: flex;
   width: 100%;
   min-width: 640px;
-  aspect-ratio: 1.62;
-  min-height: 420px;
+  aspect-ratio: 1.85;
+  min-height: 360px;
   background: #1b1b1b;
   border: 1px solid var(--pitch-line);
   border-radius: 4px;
@@ -1755,7 +1755,7 @@ img { display: block; }
   z-index: 1;
   flex: 1 1 0;
   display: flex;
-  padding: 8px 4px;
+  padding: 4px;
 }
 .pitch-half-home { flex-direction: row; }
 .pitch-half-away { flex-direction: row-reverse; }
@@ -1782,36 +1782,17 @@ img { display: block; }
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  border: 2px solid rgb(70, 194, 82);
   background: #2a2a2a;
   flex-shrink: 0;
 }
-.pitch-half-away .pitch-player-photo { border-color: rgb(122, 132, 255); }
 .pitch-player-photo img {
   width: 100%;
   height: 100%;
   border-radius: 50%;
   object-fit: cover;
 }
-.pitch-player-rating {
-  position: absolute;
-  left: 50%;
-  top: 30px;
-  transform: translateX(-50%);
-  min-width: 24px;
-  height: 16px;
-  padding: 0 3px;
-  border-radius: 2px;
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 16px;
-  letter-spacing: -0.5px;
-  font-variant-numeric: tabular-nums;
-  color: #fff;
-  text-align: center;
-}
 .pitch-player-label {
-  margin-top: 12px;
+  margin-top: 4px;
   padding: 0 4px;
   font-size: 12px;
   line-height: 14px;

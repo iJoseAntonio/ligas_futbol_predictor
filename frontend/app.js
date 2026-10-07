@@ -546,26 +546,12 @@ function groupFormationLines(players, formation) {
   return lines.filter(l => l.length);
 }
 
-// Misma escala de colores que usa Sofascore para la nota del jugador
-function ratingColor(r) {
-  if (r >= 9)   return '#374df5';
-  if (r >= 8)   return '#00adc4';
-  if (r >= 7)   return '#00c424';
-  if (r >= 6.5) return '#d9af00';
-  if (r >= 6)   return '#ed7e07';
-  return '#dc0c00';
-}
-
 function pitchPlayerHtml(p) {
-  const rating = typeof p.rating === 'number' ? p.rating : null;
   return `
     <div class="pitch-player">
       <div class="pitch-player-photo">
         <img src="https://img.sofascore.com/api/v1/player/${p.playerId}/image"
              alt="" onerror="this.style.visibility='hidden'">
-        ${rating !== null
-          ? `<span class="pitch-player-rating" style="background:${ratingColor(rating)}">${rating.toFixed(1)}</span>`
-          : ''}
       </div>
       <span class="pitch-player-label"><span class="pitch-player-number">${p.jerseyNumber ?? ''}</span>${p.shortName || p.name || ''}</span>
     </div>`;
