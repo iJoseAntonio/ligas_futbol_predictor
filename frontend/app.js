@@ -354,6 +354,7 @@ function renderMatches(round) {
 
 // ── MODAL DE DETALLE DE PARTIDO ──────────────────────────────────────────
 const matchStatsCache = {};
+const matchLineupsCache = {};
 
 function setupMatchModal() {
   const overlay = document.getElementById('match-modal-overlay');
@@ -402,26 +403,38 @@ async function openMatchModal(m) {
     </div>`;
 
   const key = `${m.homeName}|${m.awayName}|${m.rawDate || ''}`;
-  let stats = matchStatsCache[key];
-  if (!stats) {
-    try {
-      const url = `${API_URL}/match-stats` +
-        `?home=${encodeURIComponent(m.homeName)}` +
-        `&away=${encodeURIComponent(m.awayName)}` +
-        (m.rawDate ? `&fecha=${encodeURIComponent(m.rawDate)}` : '');
-      const res = await fetch(url);
-      if (res.ok) {
-        stats = await res.json();
-        matchStatsCache[key] = stats;
-      }
-    } catch (_) { /* stats queda undefined, se muestra el mensaje de error abajo */ }
-  }
+
+  const fetchJson = async (path) => {
+    const url = `${API_URL}${path}` +
+      `?home=${encodeURIComponent(m.homeName)}` +
+      `&away=${encodeURIComponent(m.awayName)}` +
+      (m.rawDate ? `&fecha=${encodeURIComponent(m.rawDate)}` : '');
+    const res = await fetch(url);
+    return res.ok ? res.json() : null;
+  };
+
+  let stats   = matchStatsCache[key];
+  let lineups = matchLineupsCache[key];
+
+  const needStats   = !stats;
+  const needLineups = lineups === undefined;
+
+  try {
+    const [statsResult, lineupsResult] = await Promise.all([
+      needStats   ? fetchJson('/match-stats') : Promise.resolve(stats),
+      needLineups ? fetchJson('/lineups')     : Promise.resolve(lineups),
+    ]);
+    stats   = statsResult;
+    lineups = lineupsResult; // puede ser null si no hay alineacion -> se cachea igual para no repreguntar
+    matchStatsCache[key]   = stats;
+    matchLineupsCache[key] = lineups;
+  } catch (_) { /* queda undefined/null, se muestran los mensajes de error abajo */ }
 
   // Evita pintar una respuesta vieja si el usuario ya cerro/cambio de partido
   if (overlay.hidden) return;
 
   content.innerHTML = buildMatchModalHeader(m) + (stats
-    ? buildMatchModalBody(stats)
+    ? buildMatchModalBody(stats, lineups)
     : `<div class="empty-tab" style="padding:30px 0">No se pudieron cargar las estadísticas de este partido.</div>`);
 }
 
@@ -503,7 +516,87 @@ function statBarRow(label, homeVal, awayVal) {
     </div>` : ''}`;
 }
 
-function buildMatchModalBody(stats) {
+// ── CANCHA DE FUTBOL (alineaciones) ──────────────────────────────────────
+// Sofascore no da coordenadas x/y por jugador; el orden de los titulares
+// dentro de cada linea SI sigue el orden de la formacion (ej. "4-2-3-1" ->
+// arquero, 4 defensas, 2 volantes, 3 volantes de ataque, 1 delantero), asi
+// que calculamos la posicion en la cancha nosotros mismos a partir de eso.
+function computeFormationPositions(players, formation, side) {
+  const titulares = (players || []).filter(p => !p.substitute);
+  if (!titulares.length) return [];
+
+  const gk = titulares[0];
+  const outfield = titulares.slice(1);
+  const lineSizes = (formation || '')
+    .split('-')
+    .map(n => parseInt(n))
+    .filter(n => !isNaN(n) && n > 0);
+
+  const lines = [[gk]];
+  let cursor = 0;
+  for (const size of lineSizes) {
+    lines.push(outfield.slice(cursor, cursor + size));
+    cursor += size;
+  }
+  if (cursor < outfield.length) lines.push(outfield.slice(cursor));
+
+  const nLines = lines.length;
+  const positions = [];
+
+  lines.forEach((linePlayers, lineIdx) => {
+    if (!linePlayers.length) return;
+    const depth = nLines > 1 ? lineIdx / (nLines - 1) : 0; // 0 = arco propio, 1 = mediocampo
+    const y = side === 'home' ? 95 - depth * 45 : 5 + depth * 45;
+
+    const n = linePlayers.length;
+    linePlayers.forEach((player, i) => {
+      const x = n === 1 ? 50 : 14 + i * (72 / (n - 1));
+      positions.push({ player, x, y });
+    });
+  });
+
+  return positions;
+}
+
+function pitchPlayerHtml(pos, sideClass) {
+  const p = pos.player;
+  const rating = typeof p.rating === 'number' ? p.rating.toFixed(1) : null;
+  return `
+    <div class="pitch-player ${sideClass}" style="left:${pos.x}%; top:${pos.y}%">
+      <div class="pitch-player-dot">
+        <img src="https://img.sofascore.com/api/v1/player/${p.playerId}/image"
+             alt="" onerror="this.style.display='none'">
+        <span class="pitch-player-number">${p.jerseyNumber ?? ''}</span>
+      </div>
+      ${rating ? `<span class="pitch-player-rating">${rating}</span>` : ''}
+      <span class="pitch-player-name">${p.shortName || p.name || ''}</span>
+    </div>`;
+}
+
+function buildPitchHtml(lineups) {
+  if (!lineups || !lineups.home || !lineups.away) {
+    return `<div class="lineups-placeholder"><span>⚽ Alineaciones no disponibles para este partido</span></div>`;
+  }
+
+  const homePositions = computeFormationPositions(lineups.home.players, lineups.home.formation, 'home');
+  const awayPositions = computeFormationPositions(lineups.away.players, lineups.away.formation, 'away');
+
+  return `
+    <div class="pitch-wrap">
+      <div class="pitch-formation-label">${lineups.away.formation || ''}</div>
+      <div class="pitch">
+        <div class="pitch-halfway-line"></div>
+        <div class="pitch-center-circle"></div>
+        <div class="pitch-box pitch-box-top"></div>
+        <div class="pitch-box pitch-box-bottom"></div>
+        ${awayPositions.map(p => pitchPlayerHtml(p, 'pitch-player-away')).join('')}
+        ${homePositions.map(p => pitchPlayerHtml(p, 'pitch-player-home')).join('')}
+      </div>
+      <div class="pitch-formation-label">${lineups.home.formation || ''}</div>
+    </div>`;
+}
+
+function buildMatchModalBody(stats, lineups) {
   const { local, visitante } = stats;
 
   const posesionHtml = `
@@ -535,9 +628,7 @@ function buildMatchModalBody(stats) {
   return `
     <div class="match-modal-body">
       <div class="match-modal-col">
-        <div class="lineups-placeholder">
-          <span>⚽ Alineaciones — próximamente</span>
-        </div>
+        ${buildPitchHtml(lineups)}
       </div>
       <div class="match-modal-col">
         ${posesionHtml}

@@ -1701,4 +1701,126 @@ img { display: block; }
 .stat-bar-fill { height: 100%; background: var(--accent); border-radius: 3px; }
 .stat-bar-away .stat-bar-fill { background: var(--text3); }
 
+/* ── CANCHA DE ALINEACIONES ───────────────────────────────────────────── */
+.pitch-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.pitch-formation-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text3);
+  letter-spacing: 0.5px;
+}
+.pitch {
+  position: relative;
+  width: 100%;
+  max-width: 300px;
+  aspect-ratio: 2 / 3;
+  background:
+    linear-gradient(rgba(255,255,255,0.03) 50%, transparent 50%),
+    #163a1f;
+  background-size: 100% 20%;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.pitch-halfway-line {
+  position: absolute;
+  left: 0; right: 0; top: 50%;
+  height: 1px;
+  background: rgba(255,255,255,0.3);
+}
+.pitch-center-circle {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 70px; height: 70px;
+  margin: -35px 0 0 -35px;
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+}
+.pitch-box {
+  position: absolute;
+  left: 50%;
+  width: 55%;
+  height: 10%;
+  margin-left: -27.5%;
+  border: 1px solid rgba(255,255,255,0.3);
+}
+.pitch-box-top    { top: 0; border-top: none; }
+.pitch-box-bottom { bottom: 0; border-bottom: none; }
+
+.lineups-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 200px;
+  color: var(--text3);
+  font-size: 13px;
+  text-align: center;
+}
+
+.pitch-player {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  width: 54px;
+}
+.pitch-player-dot {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  background: var(--surface2);
+  overflow: hidden;
+}
+.pitch-player-away .pitch-player-dot { border-color: #e24b4a; }
+.pitch-player-dot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.pitch-player-number {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text);
+  background: rgba(0,0,0,0.35);
+}
+.pitch-player-dot img[style*="display: none"] + .pitch-player-number,
+.pitch-player-dot:has(img[style*="display: none"]) .pitch-player-number {
+  background: transparent;
+}
+.pitch-player-rating {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--bg);
+  background: var(--green2);
+  border-radius: 6px;
+  padding: 0 3px;
+  line-height: 13px;
+}
+.pitch-player-name {
+  font-size: 9px;
+  color: var(--text);
+  background: rgba(0,0,0,0.45);
+  padding: 1px 3px;
+  border-radius: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
 

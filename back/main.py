@@ -597,6 +597,47 @@ def match_stats(
         "visitante": team_block('_visitante'),
     }
 
+
+_lineups_cache: list | None = None
+
+def _load_lineups() -> list:
+    global _lineups_cache
+    if _lineups_cache is None:
+        path = "modelos/lineups_2026.json"
+        if os.path.exists(path):
+            with open(path, "r", encoding="utf-8") as f:
+                _lineups_cache = json.load(f)
+        else:
+            _lineups_cache = []
+    return _lineups_cache
+
+
+@app.get("/lineups")
+@limiter.limit("60/minute")
+def lineups(
+    request: Request,
+    home: str = Query(..., description="Equipo local"),
+    away: str = Query(..., description="Equipo visitante"),
+    fecha: str | None = Query(None, description="Fecha del partido DD/MM/YYYY"),
+):
+    data = _load_lineups()
+    matches = [r for r in data if r["home_team"] == home and r["away_team"] == away]
+
+    if fecha:
+        exact = [r for r in matches if r["fecha"] == fecha]
+        if exact:
+            matches = exact
+
+    if not matches:
+        raise HTTPException(status_code=404, detail=f"Alineación no encontrada: {home} vs {away}")
+
+    row = matches[0]
+    return {
+        "fecha": row["fecha"],
+        "home":  row["home"],
+        "away":  row["away"],
+    }
+
 @app.get("/modelo-info")
 @limiter.limit("60/minute")
 def info_modelo(request: Request):

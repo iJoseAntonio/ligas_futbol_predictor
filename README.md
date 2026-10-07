@@ -11,6 +11,7 @@ Tesis — UNMSM, Facultad de Ingeniería de Sistemas e Informática.
 │   ├── main.py                        ← API FastAPI (+ handler Lambda vía Mangum)
 │   ├── migrate_to_postgres.py         ← Script manual: sube bd_liga1.csv a RDS
 │   ├── precompute_performance.py      ← Precalcula /model-performance offline (ver nota abajo)
+│   ├── scrape_lineups.py              ← Scraper de alineaciones (Sofascore, vía Playwright)
 │   ├── Dockerfile                     ← Imagen base public.ecr.aws/lambda/python:3.12
 │   ├── requirements.txt
 │   ├── .python-version
@@ -21,6 +22,7 @@ Tesis — UNMSM, Facultad de Ingeniería de Sistemas e Informática.
 │   └── modelos/
 │       ├── shap_values.json            ← Valores SHAP (endpoint /shap-values)
 │       ├── model_performance.json      ← Rendimiento por ronda precalculado (endpoint /model-performance)
+│       ├── lineups_2026.json           ← Alineaciones precalculadas (endpoint /lineups)
 │       ├── corregidos/                 ← Modelos vigentes (usados por main.py)
 │       │   ├── Goles/                  ← .pkl + hiperparámetros + métricas (Goles ≥ 2)
 │       │   ├── Goles_Esperadas/         ← .pkl + hiperparámetros + métricas (xG ≥ 1.5)
@@ -64,6 +66,17 @@ Tesis — UNMSM, Facultad de Ingeniería de Sistemas e Informática.
 > con `precompute_performance.py` y el endpoint solo lee el JSON resultante, igual que
 > ya se hacía con `shap_values.json`. Ver sección 6 de `README_AWS.md` para el detalle.
 
+> **Alineaciones (`/lineups`):** Sofascore bloquea scraping directo con `requests`
+> (403 vía Cloudflare), así que `scrape_lineups.py` usa un navegador real
+> automatizado (**Playwright**) — navega una vez a sofascore.com y desde ahí hace
+> `fetch()` a `/api/v1/event/{id}/lineups` por cada partido de 2026. El `match_id`
+> se extrae de la columna `url_partido` (el número después de `#id:`). Sofascore no
+> da coordenadas x/y por jugador; la posición en la cancha se calcula en el
+> frontend a partir del string de formación (ej. `4-2-3-1`) y el orden de los
+> titulares, que sí sigue ese mismo orden. `playwright` **no** está en
+> `requirements.txt` — solo se usa en este script local, no corre dentro de Lambda
+> (instálalo aparte: `pip install playwright && playwright install chromium`).
+
 ---
 
 ## Arquitectura en AWS
@@ -86,8 +99,13 @@ Usuario → app.js → API Gateway → Lambda (dentro de una VPC) → RDS Postgr
    cd back
    python precompute_performance.py
    ```
-5. `git add . && git commit -m "jornada X actualizada" && git push` → despliega Lambda y frontend automáticamente.
-6. **Resincronizar RDS** (manual, vía túnel SSM porque la base es privada — ver `README_AWS.md` sección 5):
+5. Regenerar las alineaciones de los partidos jugados (requiere `playwright` instalado aparte):
+   ```bash
+   cd back
+   python scrape_lineups.py
+   ```
+6. `git add . && git commit -m "jornada X actualizada" && git push` → despliega Lambda y frontend automáticamente.
+7. **Resincronizar RDS** (manual, vía túnel SSM porque la base es privada — ver `README_AWS.md` sección 5):
    ```bash
    # Terminal 1 (dejar corriendo)
    aws ssm start-session --target <INSTANCE_ID_BASTION> \
@@ -98,7 +116,7 @@ Usuario → app.js → API Gateway → Lambda (dentro de una VPC) → RDS Postgr
    cd back
    python migrate_to_postgres.py
    ```
-7. Verificar: `GET /health` → `partidos_historicos` debe coincidir con las filas del CSV (sin encabezado).
+8. Verificar: `GET /health` → `partidos_historicos` debe coincidir con las filas del CSV (sin encabezado).
 
 > **⚠ `partidos_liga1_2026.csv` está duplicado** en `back/data/` (lo usa `main.py`
 > en el servidor) y en `frontend/` (lo descarga el navegador directamente, sin pasar
