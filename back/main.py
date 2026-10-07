@@ -510,6 +510,88 @@ def match_result(
         "visitante": team_stats('_visitante'),
     }
 
+@app.get("/match-stats")
+@limiter.limit("60/minute")
+def match_stats(
+    request: Request,
+    home: str = Query(..., description="Equipo local"),
+    away: str = Query(..., description="Equipo visitante"),
+    fecha: str | None = Query(None, description="Fecha del partido DD/MM/YYYY"),
+):
+    if df_historico is None:
+        raise HTTPException(status_code=503, detail="Datos no disponibles")
+
+    mask = (
+        (df_historico['equipo_local']     == home) &
+        (df_historico['equipo_visitante'] == away)
+    )
+    found = df_historico[mask]
+
+    if found.empty:
+        raise HTTPException(status_code=404, detail=f"Partido no encontrado: {home} vs {away}")
+
+    if fecha:
+        parsed = pd.to_datetime(fecha, format='%d/%m/%Y', errors='coerce')
+        if pd.notna(parsed):
+            exact = found[found['fecha'] == parsed]
+            if not exact.empty:
+                found = exact
+
+    row = found.sort_values('fecha', ascending=False).iloc[0]
+
+    def nv(col, suffix):
+        num = pd.to_numeric(row.get(f'{col}{suffix}', 0), errors='coerce')
+        return float(num) if pd.notna(num) else 0.0
+
+    GROUPS = {
+        "ataque": {
+            "xg":                  "Goles esperados (xG)",
+            "tiros_totales":       "Tiros totales",
+            "tiros_a_puerta":      "Tiros a puerta",
+            "disparos_al_palo":    "Disparos al palo",
+            "tiros_fuera":         "Tiros fuera",
+            "tiros_bloqueados":    "Tiros bloqueados",
+            "tiros_dentro_area":   "Tiros adentro del área",
+            "tiros_fuera_area":    "Tiros desde fuera del área",
+        },
+        "pases": {
+            "pases":               "Pases",
+            "pases_precisos":      "Pases precisos",
+            "saques_de_banda":     "Saques de banda",
+            "pases_ultimo_tercio": "Pases al último tercio",
+            "pases_en_ultimo_tercio": "Pases en último tercio",
+        },
+        "defensa": {
+            "entradas":            "Entradas",
+            "intercepciones":      "Intercepciones",
+            "recuperaciones":      "Recuperaciones",
+            "despejes":            "Despejes",
+        },
+        "disciplina": {
+            "faltas":              "Faltas",
+            "tiros_libres":        "Tiros libres",
+            "fuera_de_juego":      "Fueras de juego",
+            "corners":             "Corners",
+            "tarjetas_amarillas":  "Tarjetas amarillas",
+            "tarjetas_rojas":      "Tarjetas rojas",
+        },
+        "porteria": {
+            "atajadas":            "Atajadas",
+            "saques_de_meta":      "Saques de meta",
+        },
+    }
+
+    def team_block(suffix):
+        block = {"posesion": round(nv('Posesión de pelota', suffix) * 100, 1)}
+        for group_name, fields in GROUPS.items():
+            block[group_name] = {key: nv(col, suffix) for key, col in fields.items()}
+        return block
+
+    return {
+        "fecha":     row['fecha'].strftime('%d/%m/%Y') if pd.notna(row['fecha']) else None,
+        "local":     team_block('_local'),
+        "visitante": team_block('_visitante'),
+    }
 
 @app.get("/modelo-info")
 @limiter.limit("60/minute")
