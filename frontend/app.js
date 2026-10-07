@@ -453,7 +453,7 @@ function buildMatchHeader(m) {
       <div class="match-modal-center">
         <span class="match-modal-date">${m.date || ''}${m.hour && m.hour !== 'FT' ? ' ' + m.hour : ''}</span>
         <span class="match-modal-score">${m.sh} - ${m.sa}</span>
-        <span class="match-modal-status">FINALIZADO</span>
+        <span class="match-modal-status">Finalizado</span>
       </div>
       <div class="match-modal-team">
         <img src="${logoUrl(m.awayId)}" alt="${m.awayName}" onerror="this.style.opacity=0.15">
