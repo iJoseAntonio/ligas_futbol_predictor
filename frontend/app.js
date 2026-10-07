@@ -399,6 +399,12 @@ async function openMatchView(m) {
   backBtn.title = backLabel;
   backBtn.setAttribute('aria-label', backLabel);
 
+  const meta = ROUND_META[currentRound] || {};
+  document.getElementById('match-context-text').textContent =
+    meta.stage ? `${meta.stage} · Ronda ${meta.displayNum}` : 'Liga 1';
+  document.querySelector('.right-panel').classList.add('match-view-open');
+  document.querySelector('.right-panel').scrollTop = 0;
+
   document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
   document.getElementById('tab-partido').classList.add('active');
@@ -837,6 +843,7 @@ const TAB_NAMES = ['clasificaciones', 'estadisticas', 'predicciones', 'rendimien
 function activateTab(name, updateHash = true) {
   if (!TAB_NAMES.includes(name)) return;
 
+  document.querySelector('.right-panel').classList.remove('match-view-open');
   document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
 

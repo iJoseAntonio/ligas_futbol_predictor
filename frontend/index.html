@@ -174,9 +174,15 @@
 
       <!-- Partido panel (sin boton en la nav, se activa al hacer clic en un partido) -->
       <div id="tab-partido" class="tab-content">
-        <button class="match-back-btn" id="match-back-btn" aria-label="Volver" title="Volver">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-        </button>
+        <div class="match-topbar">
+          <button class="match-back-btn" id="match-back-btn" aria-label="Volver" title="Volver">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <div class="match-context">
+            <img class="match-context-flag" src="https://img.sofascore.com/api/v1/country/PE/flag" alt="Perú">
+            <span id="match-context-text"></span>
+          </div>
+        </div>
         <div id="match-tab-content"></div>
       </div>
 
