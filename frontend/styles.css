@@ -1725,7 +1725,7 @@ img { display: block; }
 .pitch-formation-label {
   font-size: 12px;
   font-weight: 600;
-  color: var(--text2);
+  color: rgb(236, 237, 239);
   letter-spacing: 0.3px;
 }
 .pitch {
