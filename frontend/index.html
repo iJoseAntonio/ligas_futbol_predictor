@@ -172,18 +172,16 @@
       <!-- Rendimiento panel -->
       <div id="tab-rendimiento" class="tab-content"></div>
 
+      <!-- Partido panel (sin boton en la nav, se activa al hacer clic en un partido) -->
+      <div id="tab-partido" class="tab-content">
+        <button class="match-back-btn" id="match-back-btn">&larr; Volver</button>
+        <div id="match-tab-content"></div>
+      </div>
+
     </main>
   </div>
 
   </div><!-- /.page-wrap -->
-
-  <!-- ── MATCH DETAIL MODAL ── -->
-  <div class="match-modal-overlay" id="match-modal-overlay" hidden>
-    <div class="match-modal">
-      <button class="match-modal-close" id="match-modal-close" aria-label="Cerrar">&times;</button>
-      <div id="match-modal-content"></div>
-    </div>
-  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="app.js"></script>
