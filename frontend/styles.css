@@ -1668,8 +1668,8 @@ img { display: block; }
   display: flex;
 }
 .stat-bar-home { justify-content: flex-end; }
-.stat-bar-fill { height: 100%; background: var(--accent); border-radius: 3px; }
-.stat-bar-away .stat-bar-fill { background: var(--text3); }
+.stat-bar-fill { height: 100%; background: rgb(70, 194, 82); border-radius: 3px; }
+.stat-bar-away .stat-bar-fill { background: rgb(122, 132, 255); }
 
 /* ── CANCHA DE ALINEACIONES (horizontal) ──────────────────────────────── */
 .pitch-wrap {
