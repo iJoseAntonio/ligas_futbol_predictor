@@ -393,6 +393,12 @@ async function openMatchView(m) {
     ? activeMainTab.dataset.tab
     : 'clasificaciones';
 
+  const prevTabEl = document.querySelector(`.main-tab[data-tab="${_previousMainTab}"]`);
+  const backLabel = `Volver a ${prevTabEl ? prevTabEl.textContent.trim() : 'Clasificaciones'}`;
+  const backBtn = document.getElementById('match-back-btn');
+  backBtn.title = backLabel;
+  backBtn.setAttribute('aria-label', backLabel);
+
   document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
   document.getElementById('tab-partido').classList.add('active');
