@@ -625,7 +625,8 @@ function buildPitchHtml(lineups) {
     <div class="pitch-wrap">
       <div class="pitch-formations-row">
         <span class="pitch-formation-label">${lineups.home.formation || ''}</span>
-        <span class="pitch-formation-label">${lineups.away.formation || ''}</span>
+        <span class="match-section-title">Alineaciones</span>
+        <span class="pitch-formation-label pitch-formation-away">${lineups.away.formation || ''}</span>
       </div>
       <div class="pitch">
         <div class="pitch-markings">

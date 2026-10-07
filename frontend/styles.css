@@ -1743,9 +1743,17 @@ img { display: block; }
   overflow-x: auto;
 }
 .pitch-formations-row {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
   min-width: 640px;
+}
+.pitch-formation-away { text-align: right; }
+.match-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgb(236, 237, 239);
+  text-align: center;
 }
 .pitch-formation-label {
   font-size: 12px;
