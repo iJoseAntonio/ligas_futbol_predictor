@@ -237,6 +237,8 @@ function showError() {
 function renderStandings(data) {
   const el = $standingsTable();
   let html = '';
+  const showZones = currentStage === 'acumulado';
+  document.querySelectorAll('.leg-zone').forEach(item => { item.hidden = !showZones; });
 
   data.forEach((row, i) => {
     const pos     = parseInt(row['Posicion'] || row['posicion'] || i + 1);
@@ -258,7 +260,7 @@ function renderStandings(data) {
     const forma = (row['Ultimos_5'] || '').trim();
 
     // Separadores de zona (1-2 / 3-4 / 5-8 / 9-16 / 17-18)
-    if (pos === 3 || pos === 5 || pos === 9 || pos === 17) {
+    if (showZones && (pos === 3 || pos === 5 || pos === 9 || pos === 17)) {
       html += `<div class="zone-sep"></div>`;
     }
 
@@ -1695,8 +1697,11 @@ function computeFilteredStandings(filter) {
 // Mapea cada equipo a su zona real, según su posición en la tabla general "Todos".
 // Se usa para colorear las filas en las sub-pestañas Local/Visitante con el
 // ranking verdadero del equipo, no con su posición dentro de la vista filtrada.
+// Los cupos a copas y el descenso se definen por la tabla acumulada; en
+// Apertura/Clausura sueltas no aplican, asi que no se colorea nada.
 function computeTeamZones(overallStandings) {
   const map = {};
+  if (currentStage !== 'acumulado') return map;
   overallStandings.forEach(r => {
     const pos = r.Posicion;
     let zone = '';

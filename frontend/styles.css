@@ -695,6 +695,7 @@ img { display: block; }
   font-size: 10px;
   color: var(--text);
 }
+.leg-item[hidden] { display: none; }
 .leg-dot { width: 8px; height: 8px; border-radius: 50%; }
 .liber-directa-dot { background: var(--green); }
 .liber-clasif-dot  { background: var(--green2); }
