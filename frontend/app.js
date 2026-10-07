@@ -521,62 +521,61 @@ function statBarRow(label, homeVal, awayVal) {
     </div>` : ''}`;
 }
 
-// ── CANCHA DE FUTBOL (alineaciones, orientacion horizontal) ──────────────
+// ── CANCHA DE FUTBOL (alineaciones, estilo Sofascore horizontal) ─────────
 // Sofascore no da coordenadas x/y por jugador; el orden de los titulares
-// dentro de cada linea SI sigue el orden de la formacion (ej. "4-2-3-1" ->
-// arquero, 4 defensas, 2 volantes, 3 volantes de ataque, 1 delantero), asi
-// que calculamos la posicion en la cancha nosotros mismos a partir de eso.
-// La cancha va acostada: el local ataca de izquierda a derecha (x crece
-// hacia el centro) y el visitante de derecha a izquierda.
-function computeFormationPositions(players, formation, side) {
+// SI sigue el orden de la formacion (ej. "4-2-3-1" -> arquero, 4 defensas,
+// 2 volantes, 3 volantes de ataque, 1 delantero). Cada linea se pinta como
+// una columna y los jugadores se reparten con flexbox (space-evenly).
+function groupFormationLines(players, formation) {
   const titulares = (players || []).filter(p => !p.substitute);
   if (!titulares.length) return [];
 
-  const gk = titulares[0];
   const outfield = titulares.slice(1);
   const lineSizes = (formation || '')
     .split('-')
     .map(n => parseInt(n))
     .filter(n => !isNaN(n) && n > 0);
 
-  const lines = [[gk]];
+  const lines = [[titulares[0]]];
   let cursor = 0;
   for (const size of lineSizes) {
     lines.push(outfield.slice(cursor, cursor + size));
     cursor += size;
   }
   if (cursor < outfield.length) lines.push(outfield.slice(cursor));
-
-  const nLines = lines.length;
-  const positions = [];
-
-  lines.forEach((linePlayers, lineIdx) => {
-    if (!linePlayers.length) return;
-    const depth = nLines > 1 ? lineIdx / (nLines - 1) : 0; // 0 = arco propio, 1 = mediocampo
-    const x = side === 'home' ? 5 + depth * 45 : 95 - depth * 45;
-
-    const n = linePlayers.length;
-    linePlayers.forEach((player, i) => {
-      const y = n === 1 ? 50 : 10 + i * (80 / (n - 1));
-      positions.push({ player, x, y });
-    });
-  });
-
-  return positions;
+  return lines.filter(l => l.length);
 }
 
-function pitchPlayerHtml(pos, sideClass) {
-  const p = pos.player;
+// Misma escala de colores que usa Sofascore para la nota del jugador
+function ratingColor(r) {
+  if (r >= 9)   return '#374df5';
+  if (r >= 8)   return '#00adc4';
+  if (r >= 7)   return '#00c424';
+  if (r >= 6.5) return '#d9af00';
+  if (r >= 6)   return '#ed7e07';
+  return '#dc0c00';
+}
+
+function pitchPlayerHtml(p) {
+  const rating = typeof p.rating === 'number' ? p.rating : null;
   return `
-    <div class="pitch-player ${sideClass}" style="left:${pos.x}%; top:${pos.y}%">
-      <div class="pitch-player-dot">
+    <div class="pitch-player">
+      <div class="pitch-player-photo">
         <img src="https://img.sofascore.com/api/v1/player/${p.playerId}/image"
-             alt="" onerror="this.style.display='none'">
+             alt="" onerror="this.style.visibility='hidden'">
+        ${rating !== null
+          ? `<span class="pitch-player-rating" style="background:${ratingColor(rating)}">${rating.toFixed(1)}</span>`
+          : ''}
       </div>
-      <div class="pitch-player-info">
-        <span class="pitch-player-number">${p.jerseyNumber ?? ''}</span>
-        <span class="pitch-player-name">${p.shortName || p.name || ''}</span>
-      </div>
+      <span class="pitch-player-label"><span class="pitch-player-number">${p.jerseyNumber ?? ''}</span>${p.shortName || p.name || ''}</span>
+    </div>`;
+}
+
+function pitchHalfHtml(team, side) {
+  const lines = groupFormationLines(team.players, team.formation);
+  return `
+    <div class="pitch-half pitch-half-${side}">
+      ${lines.map(line => `<div class="pitch-line">${line.map(pitchPlayerHtml).join('')}</div>`).join('')}
     </div>`;
 }
 
@@ -585,9 +584,6 @@ function buildPitchHtml(lineups) {
     return `<div class="lineups-placeholder"><span>⚽ Alineaciones no disponibles para este partido</span></div>`;
   }
 
-  const homePositions = computeFormationPositions(lineups.home.players, lineups.home.formation, 'home');
-  const awayPositions = computeFormationPositions(lineups.away.players, lineups.away.formation, 'away');
-
   return `
     <div class="pitch-wrap">
       <div class="pitch-formations-row">
@@ -595,12 +591,20 @@ function buildPitchHtml(lineups) {
         <span class="pitch-formation-label">${lineups.away.formation || ''}</span>
       </div>
       <div class="pitch">
-        <div class="pitch-halfway-line"></div>
-        <div class="pitch-center-circle"></div>
-        <div class="pitch-box pitch-box-left"></div>
-        <div class="pitch-box pitch-box-right"></div>
-        ${homePositions.map(p => pitchPlayerHtml(p, 'pitch-player-home')).join('')}
-        ${awayPositions.map(p => pitchPlayerHtml(p, 'pitch-player-away')).join('')}
+        <div class="pitch-markings">
+          <div class="pm-halfway"></div>
+          <div class="pm-center-circle"></div>
+          <div class="pm-box pm-box-left"></div>
+          <div class="pm-goal pm-goal-left"></div>
+          <div class="pm-box pm-box-right"></div>
+          <div class="pm-goal pm-goal-right"></div>
+          <div class="pm-corner pm-tl"></div>
+          <div class="pm-corner pm-tr"></div>
+          <div class="pm-corner pm-bl"></div>
+          <div class="pm-corner pm-br"></div>
+        </div>
+        ${pitchHalfHtml(lineups.home, 'home')}
+        ${pitchHalfHtml(lineups.away, 'away')}
       </div>
     </div>`;
 }

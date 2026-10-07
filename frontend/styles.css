@@ -1671,61 +1671,73 @@ img { display: block; }
 .stat-bar-fill { height: 100%; background: rgb(70, 194, 82); border-radius: 3px; }
 .stat-bar-away .stat-bar-fill { background: rgb(122, 132, 255); }
 
-/* ── CANCHA DE ALINEACIONES (horizontal) ──────────────────────────────── */
+/* ── CANCHA DE ALINEACIONES (horizontal, estilo Sofascore) ────────────── */
 .pitch-wrap {
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  gap: 6px;
+  gap: 8px;
   width: 100%;
+  overflow-x: auto;
 }
 .pitch-formations-row {
   display: flex;
   justify-content: space-between;
-  width: 100%;
+  min-width: 640px;
 }
 .pitch-formation-label {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
-  color: var(--text3);
-  letter-spacing: 0.5px;
+  color: var(--text2);
+  letter-spacing: 0.3px;
 }
 .pitch {
+  --pitch-line: rgba(255, 255, 255, 0.18);
   position: relative;
+  display: flex;
   width: 100%;
-  aspect-ratio: 20 / 9;
-  background:
-    linear-gradient(90deg, rgba(255,255,255,0.03) 50%, transparent 50%),
-    #163a1f;
-  background-size: 20% 100%;
-  border: 1px solid rgba(255,255,255,0.15);
-  border-radius: 6px;
+  min-width: 640px;
+  aspect-ratio: 1.62;
+  min-height: 420px;
+  background: #1b1b1b;
+  border: 1px solid var(--pitch-line);
+  border-radius: 4px;
   overflow: hidden;
 }
-.pitch-halfway-line {
+.pitch-markings { position: absolute; inset: 0; pointer-events: none; }
+.pm-halfway {
   position: absolute;
-  top: 0; bottom: 0; left: 50%;
-  width: 1px;
-  background: rgba(255,255,255,0.3);
+  left: 50%; top: 0; bottom: 0;
+  border-left: 1px solid var(--pitch-line);
 }
-.pitch-center-circle {
+.pm-center-circle {
   position: absolute;
   left: 50%; top: 50%;
-  width: 70px; height: 70px;
-  margin: -35px 0 0 -35px;
-  border: 1px solid rgba(255,255,255,0.3);
+  height: 28%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border: 1px solid var(--pitch-line);
   border-radius: 50%;
 }
-.pitch-box {
+.pm-box, .pm-goal {
   position: absolute;
   top: 50%;
-  height: 55%;
-  width: 10%;
-  margin-top: -27.5%;
-  border: 1px solid rgba(255,255,255,0.3);
+  transform: translateY(-50%);
+  border: 1px solid var(--pitch-line);
 }
-.pitch-box-left  { left: 0; border-left: none; }
-.pitch-box-right { right: 0; border-right: none; }
+.pm-box  { height: 44%; width: 7%; }
+.pm-goal { height: 20%; width: 3%; }
+.pm-box-left,  .pm-goal-left  { left: -1px; }
+.pm-box-right, .pm-goal-right { right: -1px; }
+.pm-corner {
+  position: absolute;
+  width: 14px; height: 14px;
+  border: 1px solid var(--pitch-line);
+  border-radius: 50%;
+}
+.pm-tl { left: -7px;  top: -7px; }
+.pm-tr { right: -7px; top: -7px; }
+.pm-bl { left: -7px;  bottom: -7px; }
+.pm-br { right: -7px; bottom: -7px; }
 
 .lineups-placeholder {
   display: flex;
@@ -1738,52 +1750,79 @@ img { display: block; }
   text-align: center;
 }
 
+.pitch-half {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 0;
+  display: flex;
+  padding: 8px 4px;
+}
+.pitch-half-home { flex-direction: row; }
+.pitch-half-away { flex-direction: row-reverse; }
+.pitch-line {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  align-items: center;
+}
+/* El local ataca hacia la derecha: su lateral derecho queda abajo */
+.pitch-half-home .pitch-line { flex-direction: column-reverse; }
+
 .pitch-player {
-  position: absolute;
-  transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  width: 54px;
+  width: 86px;
+  min-width: 60px;
+  max-width: 100%;
 }
-.pitch-player-dot {
+.pitch-player-photo {
   position: relative;
-  width: 22px;
-  height: 22px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   border: 2px solid rgb(70, 194, 82);
-  background: var(--surface2);
-  overflow: hidden;
+  background: #2a2a2a;
+  flex-shrink: 0;
 }
-.pitch-player-away .pitch-player-dot { border-color: rgb(122, 132, 255); }
-.pitch-player-dot img {
+.pitch-half-away .pitch-player-photo { border-color: rgb(122, 132, 255); }
+.pitch-player-photo img {
   width: 100%;
   height: 100%;
+  border-radius: 50%;
   object-fit: cover;
 }
-.pitch-player-info {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  background: rgba(0,0,0,0.45);
-  padding: 1px 4px;
-  border-radius: 3px;
-  max-width: 100%;
+.pitch-player-rating {
+  position: absolute;
+  left: 50%;
+  top: 30px;
+  transform: translateX(-50%);
+  min-width: 24px;
+  height: 16px;
+  padding: 0 3px;
+  border-radius: 2px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 16px;
+  letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  text-align: center;
+}
+.pitch-player-label {
+  margin-top: 12px;
+  padding: 0 4px;
+  font-size: 12px;
+  line-height: 14px;
+  color: #fff;
+  text-align: center;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
 }
 .pitch-player-number {
-  font-size: 9px;
-  font-weight: 700;
-  color: var(--text);
-  flex-shrink: 0;
+  color: #a4a9b3;
+  margin-right: 3px;
 }
-.pitch-player-name {
-  font-size: 9px;
-  color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-
