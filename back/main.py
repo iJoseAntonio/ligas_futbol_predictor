@@ -604,19 +604,10 @@ def _load_lineups() -> list:
     global _lineups_cache
     if _lineups_cache is None:
         path = "modelos/lineups_2026.json"
-        exists = os.path.exists(path)
-        print(f"DEBUG lineups: path={path} exists={exists} cwd={os.getcwd()}")
-        if exists:
+        if os.path.exists(path):
             with open(path, "r", encoding="utf-8") as f:
                 _lineups_cache = json.load(f)
-            print(f"DEBUG lineups: cargados {len(_lineups_cache)} registros")
-            if _lineups_cache:
-                print(f"DEBUG lineups: ejemplo home_team={_lineups_cache[0]['home_team']!r} away_team={_lineups_cache[0]['away_team']!r}")
         else:
-            try:
-                print(f"DEBUG lineups: contenido de modelos/ -> {os.listdir('modelos')}")
-            except Exception as e:
-                print(f"DEBUG lineups: no se pudo listar modelos/ -> {e}")
             _lineups_cache = []
     return _lineups_cache
 
