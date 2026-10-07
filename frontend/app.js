@@ -681,6 +681,7 @@ function buildMatchBody(stats, lineups) {
       ${buildPitchHtml(lineups)}
     </div>
     <div class="match-stats-wrap">
+      <div class="match-section-title match-stats-title">Estadísticas del partido</div>
       ${posesionHtml}
       <div class="match-stats-grid">
         ${groupsHtml}

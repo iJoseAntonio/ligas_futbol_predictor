@@ -1749,6 +1749,7 @@ img { display: block; }
   min-width: 640px;
 }
 .pitch-formation-away { text-align: right; }
+.match-stats-title { margin-bottom: 16px; }
 .match-section-title {
   font-size: 14px;
   font-weight: 600;
@@ -1767,7 +1768,7 @@ img { display: block; }
   display: flex;
   width: 100%;
   min-width: 640px;
-  aspect-ratio: 2;
+  aspect-ratio: 2.15;
   min-height: 330px;
   background: #1b1b1b;
   border: 1px solid var(--pitch-line);
