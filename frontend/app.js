@@ -323,7 +323,8 @@ function renderMatches(round) {
       : `<div style="min-width:16px"></div>`;
 
     html += `
-    <div class="match-row" style="animation-delay:${i * 0.04}s">
+    <div class="match-row ${finished ? 'match-row-clickable' : ''}" style="animation-delay:${i * 0.04}s"
+         ${finished ? `data-match-idx="${i}" role="button" tabindex="0"` : ''}>
       <div class="match-time-cell">
         ${dateHtml}
         ${statusHtml}
@@ -349,6 +350,200 @@ function renderMatches(round) {
   });
 
   el.innerHTML = html || '<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Sin partidos para esta jornada</div>';
+}
+
+// ── MODAL DE DETALLE DE PARTIDO ──────────────────────────────────────────
+const matchStatsCache = {};
+
+function setupMatchModal() {
+  const overlay = document.getElementById('match-modal-overlay');
+  const closeBtn = document.getElementById('match-modal-close');
+  if (!overlay || !closeBtn) return;
+
+  $matchesList().addEventListener('click', (e) => {
+    const row = e.target.closest('[data-match-idx]');
+    if (!row) return;
+    const idx = parseInt(row.dataset.matchIdx);
+    const m = (MATCHES[currentRound] || [])[idx];
+    if (m) openMatchModal(m);
+  });
+
+  $matchesList().addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const row = e.target.closest('[data-match-idx]');
+    if (!row) return;
+    e.preventDefault();
+    const idx = parseInt(row.dataset.matchIdx);
+    const m = (MATCHES[currentRound] || [])[idx];
+    if (m) openMatchModal(m);
+  });
+
+  closeBtn.addEventListener('click', closeMatchModal);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeMatchModal(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !overlay.hidden) closeMatchModal();
+  });
+}
+
+function closeMatchModal() {
+  document.getElementById('match-modal-overlay').hidden = true;
+}
+
+async function openMatchModal(m) {
+  const overlay = document.getElementById('match-modal-overlay');
+  const content = document.getElementById('match-modal-content');
+  overlay.hidden = false;
+
+  content.innerHTML = `
+    ${buildMatchModalHeader(m)}
+    <div class="loading-state" style="padding:40px 0">
+      <div class="spinner"></div>
+      <span>Cargando estadísticas…</span>
+    </div>`;
+
+  const key = `${m.homeName}|${m.awayName}|${m.rawDate || ''}`;
+  let stats = matchStatsCache[key];
+  if (!stats) {
+    try {
+      const url = `${API_URL}/match-stats` +
+        `?home=${encodeURIComponent(m.homeName)}` +
+        `&away=${encodeURIComponent(m.awayName)}` +
+        (m.rawDate ? `&fecha=${encodeURIComponent(m.rawDate)}` : '');
+      const res = await fetch(url);
+      if (res.ok) {
+        stats = await res.json();
+        matchStatsCache[key] = stats;
+      }
+    } catch (_) { /* stats queda undefined, se muestra el mensaje de error abajo */ }
+  }
+
+  // Evita pintar una respuesta vieja si el usuario ya cerro/cambio de partido
+  if (overlay.hidden) return;
+
+  content.innerHTML = buildMatchModalHeader(m) + (stats
+    ? buildMatchModalBody(stats)
+    : `<div class="empty-tab" style="padding:30px 0">No se pudieron cargar las estadísticas de este partido.</div>`);
+}
+
+function buildMatchModalHeader(m) {
+  return `
+    <div class="match-modal-header">
+      <div class="match-modal-team">
+        <img src="${logoUrl(m.homeId)}" alt="${m.homeName}" onerror="this.style.opacity=0.15">
+        <span>${m.homeName}</span>
+      </div>
+      <div class="match-modal-center">
+        <span class="match-modal-date">${m.date || ''}${m.hour && m.hour !== 'FT' ? ' ' + m.hour : ''}</span>
+        <span class="match-modal-score">${m.sh} - ${m.sa}</span>
+        <span class="match-modal-status">FINALIZADO</span>
+      </div>
+      <div class="match-modal-team">
+        <img src="${logoUrl(m.awayId)}" alt="${m.awayName}" onerror="this.style.opacity=0.15">
+        <span>${m.awayName}</span>
+      </div>
+    </div>`;
+}
+
+const STAT_GROUP_LABELS = {
+  ataque:     'Ataque',
+  pases:      'Pases',
+  defensa:    'Defensa',
+  disciplina: 'Disciplina',
+  porteria:   'Portería',
+};
+
+const STAT_FIELD_LABELS = {
+  xg:                      'Goles esperados (xG)',
+  tiros_totales:           'Tiros totales',
+  tiros_a_puerta:          'Tiros a puerta',
+  disparos_al_palo:        'Disparos al palo',
+  tiros_fuera:             'Tiros fuera',
+  tiros_bloqueados:        'Tiros bloqueados',
+  tiros_dentro_area:       'Tiros dentro del área',
+  tiros_fuera_area:        'Tiros fuera del área',
+  pases:                   'Pases',
+  pases_precisos:          'Pases precisos',
+  saques_de_banda:         'Saques de banda',
+  pases_ultimo_tercio:     'Pases al último tercio',
+  pases_en_ultimo_tercio:  'Pases en el último tercio',
+  entradas:                'Entradas',
+  intercepciones:          'Intercepciones',
+  recuperaciones:          'Recuperaciones',
+  despejes:                'Despejes',
+  faltas:                  'Faltas',
+  tiros_libres:            'Tiros libres',
+  fuera_de_juego:          'Fueras de juego',
+  corners:                 'Corners',
+  tarjetas_amarillas:      'Tarjetas amarillas',
+  tarjetas_rojas:          'Tarjetas rojas',
+  atajadas:                'Atajadas',
+  saques_de_meta:          'Saques de meta',
+};
+
+function statBarRow(label, homeVal, awayVal) {
+  // Si alguno de los dos no es numero (ej. "115/137"), se muestra como texto sin barra
+  const homeNum = typeof homeVal === 'number' ? homeVal : parseFloat(homeVal);
+  const awayNum = typeof awayVal === 'number' ? awayVal : parseFloat(awayVal);
+  const isNumeric = !isNaN(homeNum) && !isNaN(awayNum) && typeof homeVal !== 'string';
+
+  const total = isNumeric ? (homeNum + awayNum) : 0;
+  const homePct = total > 0 ? (homeNum / total) * 100 : 50;
+  const awayPct = total > 0 ? (awayNum / total) * 100 : 50;
+
+  return `
+    <div class="stat-row">
+      <span class="stat-val stat-val-home">${homeVal}</span>
+      <span class="stat-label">${label}</span>
+      <span class="stat-val stat-val-away">${awayVal}</span>
+    </div>
+    ${isNumeric ? `
+    <div class="stat-bars">
+      <div class="stat-bar-track stat-bar-home"><div class="stat-bar-fill" style="width:${homePct}%"></div></div>
+      <div class="stat-bar-track stat-bar-away"><div class="stat-bar-fill" style="width:${awayPct}%"></div></div>
+    </div>` : ''}`;
+}
+
+function buildMatchModalBody(stats) {
+  const { local, visitante } = stats;
+
+  const posesionHtml = `
+    <div class="stat-group">
+      <div class="stat-row">
+        <span class="stat-val stat-val-home">${local.posesion}%</span>
+        <span class="stat-label">Posesión de pelota</span>
+        <span class="stat-val stat-val-away">${visitante.posesion}%</span>
+      </div>
+      <div class="stat-bars">
+        <div class="stat-bar-track stat-bar-home"><div class="stat-bar-fill" style="width:${local.posesion}%"></div></div>
+        <div class="stat-bar-track stat-bar-away"><div class="stat-bar-fill" style="width:${visitante.posesion}%"></div></div>
+      </div>
+    </div>`;
+
+  const groupsHtml = Object.keys(STAT_GROUP_LABELS).map(groupKey => {
+    const fields = local[groupKey];
+    if (!fields) return '';
+    const rows = Object.keys(fields).map(fieldKey =>
+      statBarRow(STAT_FIELD_LABELS[fieldKey] || fieldKey, local[groupKey][fieldKey], visitante[groupKey][fieldKey])
+    ).join('');
+    return `
+      <div class="stat-group">
+        <div class="stat-group-title">${STAT_GROUP_LABELS[groupKey]}</div>
+        ${rows}
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="match-modal-body">
+      <div class="match-modal-col">
+        <div class="lineups-placeholder">
+          <span>⚽ Alineaciones — próximamente</span>
+        </div>
+      </div>
+      <div class="match-modal-col">
+        ${posesionHtml}
+        ${groupsHtml}
+      </div>
+    </div>`;
 }
 
 // ── PREDICCIONES API ──────────────────────────────────────────────────────
@@ -1446,6 +1641,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupMainTabs();
   setupSubTabs();
   setupClasDropdown();
+  setupMatchModal();
   buildRoundSelect();
   setupRoundNav();
 
