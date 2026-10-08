@@ -1137,6 +1137,9 @@ const STATS_COLS = [
   { key: 'goles_avg',     label: 'Goles',           decimals: 2 },
   { key: 'tiros_tot_avg', label: 'Tiros totales',   decimals: 1 },
   { key: 'tiros_avg',     label: 'Tiros a puerta',  decimals: 1 },
+  { key: 'posesion_avg',  label: 'Posesión',        decimals: 1, suffix: '%' },
+  { key: 'corners_avg',   label: 'Tiros de esquina', decimals: 1 },
+  { key: 'faltas_avg',    label: 'Faltas',          decimals: 1 },
 ];
 
 function renderStatsTable() {
@@ -1156,14 +1159,14 @@ function renderStatsTable() {
       <span class="stats-th-left">Equipo</span>
       <span>PJ</span>
       ${STATS_COLS.map(c => `
-        <span class="stats-sort-th ${c.key === sortCol ? 'is-sorted' : ''}" data-col="${c.key}" title="${c.label}">${c.label}${tri(c.key)}</span>`).join('')}
+        <span class="stats-sort-th ${c.key === sortCol ? 'is-sorted' : ''}" data-col="${c.key}" title="${c.label}"><span class="stats-th-label">${c.label}</span>${tri(c.key)}</span>`).join('')}
     </div>`;
 
   sorted.forEach((team, i) => {
     const id   = getTeamId(team.equipo);
     const logo = id ? `https://img.sofascore.com/api/v1/team/${id}/image` : '';
     const cells = STATS_COLS.map(c => `
-        <span class="stats-val ${c.key === sortCol ? 'is-sorted' : ''}">${parseFloat(team[c.key]).toFixed(c.decimals)}</span>`
+        <span class="stats-val">${parseFloat(team[c.key] ?? 0).toFixed(c.decimals)}${c.suffix || ''}</span>`
     ).join('');
 
     html += `

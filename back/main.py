@@ -686,7 +686,8 @@ def team_rankings(request: Request):
             if valid_teams and team not in valid_teams:
                 continue
             if team not in teams:
-                teams[team] = {'xg': [], 'tiros': [], 'goles': [], 'tiros_tot': []}
+                teams[team] = {'xg': [], 'tiros': [], 'goles': [], 'tiros_tot': [],
+                               'posesion': [], 'corners': [], 'faltas': []}
 
             def nv(col, s=sfx, r=row):
                 num = pd.to_numeric(r.get(f'{col}{s}', 0), errors='coerce')
@@ -704,6 +705,10 @@ def team_rankings(request: Request):
                 teams[team]['tiros'].append(tir)
                 teams[team]['goles'].append(gol)
                 teams[team]['tiros_tot'].append(tir_tot)
+                # En el CSV la posesión viene como fracción (0.67); se expone en %
+                teams[team]['posesion'].append(posesion * 100 if posesion <= 1 else posesion)
+                teams[team]['corners'].append(nv('Corners'))
+                teams[team]['faltas'].append(nv('Faltas'))
 
     result = [
         {
@@ -713,6 +718,9 @@ def team_rankings(request: Request):
             'tiros_avg':     round(float(np.mean(s['tiros'])),     1),
             'goles_avg':     round(float(np.mean(s['goles'])),     2),
             'tiros_tot_avg': round(float(np.mean(s['tiros_tot'])), 1),
+            'posesion_avg':  round(float(np.mean(s['posesion'])),  1),
+            'corners_avg':   round(float(np.mean(s['corners'])),   1),
+            'faltas_avg':    round(float(np.mean(s['faltas'])),    1),
         }
         for t, s in teams.items()
         if s['xg']
