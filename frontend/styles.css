@@ -564,7 +564,7 @@ img { display: block; }
   grid-template-columns: 6px 28px 1fr 34px 34px 34px 34px 46px 54px 115px 34px;
   gap: 2px;
   padding: 6px 12px;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text);
   align-items: center;
   border-bottom: 1px solid var(--border);
@@ -1061,7 +1061,7 @@ img { display: block; }
   top: 0;
   z-index: 5;
   background: var(--surface2);
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text2);
 }
 .stats-table-head > * { padding: 6px 6px 18px; position: relative; min-height: 52px; }
