@@ -920,7 +920,7 @@ async function renderPredictionsTab(round) {
   if (!container) return;
 
   const meta = ROUND_META[round] || {};
-  if (titleEl) titleEl.textContent = `${meta.stage || 'Liga 1'} — Jornada ${meta.displayNum ?? round}`;
+  if (titleEl) titleEl.textContent = `${meta.stage || 'Liga 1'} — Ronda ${meta.displayNum ?? round}`;
 
   const matches = MATCHES[round] || [];
   if (!matches.length) {
