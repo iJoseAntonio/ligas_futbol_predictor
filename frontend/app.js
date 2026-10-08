@@ -516,10 +516,9 @@ const STAT_FIELD_INFO = {
   xg: {
     title: 'Goles esperados (xG)',
     lead:  'xG mide la calidad de una oportunidad y la probabilidad de que la misma termine en gol.',
-    body:  'Se calcula basándose en numerosos factores, tales como la posición del rematador/a, ' +
-           'el ángulo de remate, la distancia de la portería, etc. Cada disparo es evaluado ' +
-           'individualmente y puede tener un valor entre 0 y 1. El valor xG final es la suma de ' +
-           'los valores de todas las oportunidades de remate. Un penalti tiene un valor fijo de 0.79.',
+    body:  'Cada disparo es evaluado individualmente' +
+           'y puede tener un valor entre 0 y 1. El valor xG final es la suma de ' +
+           'los valores de todas las oportunidades de remate.',
   },
 };
 
