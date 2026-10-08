@@ -675,58 +675,64 @@ def team_rankings(request: Request):
 
     df_2026 = df_historico[df_historico['fecha'].dt.year == 2026]
 
-    teams: dict = {}
+    CONDICIONES = ('todos', 'local', 'visitante')
+    STATS = ('xg', 'tiros', 'goles', 'tiros_tot', 'posesion', 'corners', 'faltas')
+    teams: dict = {}  # equipo -> condicion -> estadistica -> lista de valores
     for _, row in df_2026.iterrows():
-        for team, sfx in [
-            (row.get('equipo_local'),     '_local'),
-            (row.get('equipo_visitante'), '_visitante'),
+        for team, sfx, cond in [
+            (row.get('equipo_local'),     '_local',     'local'),
+            (row.get('equipo_visitante'), '_visitante', 'visitante'),
         ]:
             if not team:
                 continue
             if valid_teams and team not in valid_teams:
                 continue
-            if team not in teams:
-                teams[team] = {'xg': [], 'tiros': [], 'goles': [], 'tiros_tot': [],
-                               'posesion': [], 'corners': [], 'faltas': []}
 
             def nv(col, s=sfx, r=row):
                 num = pd.to_numeric(r.get(f'{col}{s}', 0), errors='coerce')
                 return num if pd.notna(num) else 0.0
 
-            xg      = nv('Goles esperados (xG)')
-            tir     = nv('Tiros a puerta')
-            gol     = nv('goles')
-            tir_tot = nv('Tiros totales')
             posesion = nv('Posesión de pelota')
             # Usamos posesión (siempre > 0 en un partido real) en vez de xG/tiros,
             # que pueden ser legítimamente 0 en una actuación muy floja.
-            if posesion > 0:
-                teams[team]['xg'].append(xg)
-                teams[team]['tiros'].append(tir)
-                teams[team]['goles'].append(gol)
-                teams[team]['tiros_tot'].append(tir_tot)
+            if posesion <= 0:
+                continue
+            valores = {
+                'xg':        nv('Goles esperados (xG)'),
+                'tiros':     nv('Tiros a puerta'),
+                'goles':     nv('goles'),
+                'tiros_tot': nv('Tiros totales'),
                 # En el CSV la posesión viene como fracción (0.67); se expone en %
-                teams[team]['posesion'].append(posesion * 100 if posesion <= 1 else posesion)
-                teams[team]['corners'].append(nv('Corners'))
-                teams[team]['faltas'].append(nv('Faltas'))
+                'posesion':  posesion * 100 if posesion <= 1 else posesion,
+                'corners':   nv('Corners'),
+                'faltas':    nv('Faltas'),
+            }
+            por_cond = teams.setdefault(team, {c: {k: [] for k in STATS} for c in CONDICIONES})
+            for c in ('todos', cond):
+                for k, v in valores.items():
+                    por_cond[c][k].append(v)
 
-    result = [
-        {
-            'equipo':        t,
-            'partidos':      len(s['xg']),
-            'xg_avg':        round(float(np.mean(s['xg'])),       2),
-            'tiros_avg':     round(float(np.mean(s['tiros'])),     1),
-            'goles_avg':     round(float(np.mean(s['goles'])),     2),
-            'tiros_tot_avg': round(float(np.mean(s['tiros_tot'])), 1),
-            'posesion_avg':  round(float(np.mean(s['posesion'])),  1),
-            'corners_avg':   round(float(np.mean(s['corners'])),   1),
-            'faltas_avg':    round(float(np.mean(s['faltas'])),    1),
-        }
-        for t, s in teams.items()
-        if s['xg']
-    ]
-    result.sort(key=lambda x: x['xg_avg'], reverse=True)
-    return result
+    def resumen(cond: str) -> list:
+        filas = [
+            {
+                'equipo':        t,
+                'partidos':      len(s['xg']),
+                'xg_avg':        round(float(np.mean(s['xg'])),        2),
+                'tiros_avg':     round(float(np.mean(s['tiros'])),     1),
+                'goles_avg':     round(float(np.mean(s['goles'])),     2),
+                'tiros_tot_avg': round(float(np.mean(s['tiros_tot'])), 1),
+                'posesion_avg':  round(float(np.mean(s['posesion'])),  1),
+                'corners_avg':   round(float(np.mean(s['corners'])),   1),
+                'faltas_avg':    round(float(np.mean(s['faltas'])),    1),
+            }
+            for t, conds in teams.items()
+            for s in [conds[cond]]
+            if s['xg']
+        ]
+        filas.sort(key=lambda x: x['xg_avg'], reverse=True)
+        return filas
+
+    return {cond: resumen(cond) for cond in CONDICIONES}
 
 
 @app.get("/model-metrics")

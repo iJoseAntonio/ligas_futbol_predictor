@@ -223,7 +223,7 @@ function computeStandings() {
   $loading().style.display   = 'none';
   $tableWrap().style.display = 'block';
 
-  const activeSub = document.querySelector('.sub-tab.active');
+  const activeSub = document.querySelector('#tab-clasificaciones .sub-tab.active');
   const filter    = activeSub ? activeSub.dataset.filter : 'all';
   renderStandings(computeFilteredStandings(filter));
 }
@@ -1131,13 +1131,14 @@ function buildPredCardHTML(m, data, result = null) {
 // ── ESTADÍSTICAS TAB ──────────────────────────────────────────────────────
 let _statsData = null;
 let _statsSort = { col: 'xg_avg', desc: true };
+let _statsFilter = 'todos'; // 'todos' | 'local' | 'visitante'
 
 const STATS_COLS = [
+  { key: 'posesion_avg',  label: 'Posesión',        decimals: 1, suffix: '%' },
   { key: 'xg_avg',        label: 'Goles esperados', decimals: 2 },
   { key: 'goles_avg',     label: 'Goles',           decimals: 2 },
   { key: 'tiros_tot_avg', label: 'Tiros totales',   decimals: 1 },
   { key: 'tiros_avg',     label: 'Tiros a puerta',  decimals: 1 },
-  { key: 'posesion_avg',  label: 'Posesión',        decimals: 1, suffix: '%' },
   { key: 'corners_avg',   label: 'Tiros de esquina', decimals: 1 },
   { key: 'faltas_avg',    label: 'Faltas',          decimals: 1 },
 ];
@@ -1146,7 +1147,7 @@ function renderStatsTable() {
   const content = document.getElementById('stats-table-content');
   if (!content || !_statsData) return;
 
-  const data = _statsData;
+  const data = _statsData[_statsFilter] || [];
   const { col: sortCol, desc } = _statsSort;
   const sorted = [...data].sort((a, b) => desc ? b[sortCol] - a[sortCol] : a[sortCol] - b[sortCol]);
 
@@ -1202,6 +1203,11 @@ async function renderEstadisticasTab() {
     <div class="stats-tab-wrap">
       <div class="stats-tab-header">
         <span class="pred-tab-title">Promedio de estadísticas generales</span>
+        <div class="sub-tab-wrap" id="stats-filter">
+          <button class="sub-tab ${_statsFilter === 'todos' ? 'active' : ''}" data-filter="todos">Todos</button>
+          <button class="sub-tab ${_statsFilter === 'local' ? 'active' : ''}" data-filter="local">Local</button>
+          <button class="sub-tab ${_statsFilter === 'visitante' ? 'active' : ''}" data-filter="visitante">Visitante</button>
+        </div>
       </div>
       <div class="stats-table-wrap">
         <div id="stats-table-content">
@@ -1214,7 +1220,14 @@ async function renderEstadisticasTab() {
     const res = await fetch(`${API_URL}/team-rankings`);
     if (!res.ok) throw new Error();
     _statsData = await res.json();
-    if (!_statsData.length) {
+    document.querySelectorAll('#stats-filter .sub-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        _statsFilter = btn.dataset.filter;
+        document.querySelectorAll('#stats-filter .sub-tab').forEach(b => b.classList.toggle('active', b === btn));
+        renderStatsTable();
+      });
+    });
+    if (!(_statsData.todos || []).length) {
       document.getElementById('stats-table-content').innerHTML =
         '<div class="empty-tab">Sin datos disponibles</div>';
       return;
@@ -1722,9 +1735,9 @@ function computeTeamZones(overallStandings) {
 }
 
 function setupSubTabs() {
-  document.querySelectorAll('.sub-tab').forEach(tab => {
+  document.querySelectorAll('#tab-clasificaciones .sub-tab').forEach(tab => {
     tab.addEventListener('click', () => {
-      document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('#tab-clasificaciones .sub-tab').forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
       renderStandings(computeFilteredStandings(tab.dataset.filter));
     });
@@ -1765,7 +1778,7 @@ function setupClasDropdown() {
 
       closeMenu();
 
-      const activeSub = document.querySelector('.sub-tab.active');
+      const activeSub = document.querySelector('#tab-clasificaciones .sub-tab.active');
       const filter     = activeSub ? activeSub.dataset.filter : 'all';
       standingsData = computeFilteredStandings('all');
       teamZoneMap   = computeTeamZones(standingsData);
