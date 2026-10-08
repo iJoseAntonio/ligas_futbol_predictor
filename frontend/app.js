@@ -512,6 +512,30 @@ const STAT_FIELD_LABELS = {
   saques_de_meta:          'Saques de meta',
 };
 
+const STAT_FIELD_INFO = {
+  xg: {
+    title: 'Goles esperados (xG)',
+    lead:  'xG mide la calidad de una oportunidad y la probabilidad de que la misma termine en gol.',
+    body:  'Se calcula basándose en numerosos factores, tales como la posición del rematador/a, ' +
+           'el ángulo de remate, la distancia de la portería, etc. Cada disparo es evaluado ' +
+           'individualmente y puede tener un valor entre 0 y 1. El valor xG final es la suma de ' +
+           'los valores de todas las oportunidades de remate. Un penalti tiene un valor fijo de 0.79.',
+  },
+};
+
+function statInfoHtml(info) {
+  if (!info) return '';
+  return `
+    <span class="stat-info" tabindex="0" aria-label="Qué es ${info.title}">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c5.52 0 10 4.48 10 10s-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2m0 2c-4.41 0-8 3.59-8 8s3.59 8 8 8 8-3.59 8-8-3.59-8-8-8m1 7v6h-2v-6zm0-4v2h-2V7z"/></svg>
+      <span class="stat-info-tip" role="tooltip">
+        <strong class="stat-info-title">${info.title}</strong>
+        <strong class="stat-info-lead">${info.lead}</strong>
+        <span>${info.body}</span>
+      </span>
+    </span>`;
+}
+
 const RATIO_RE = /^\s*(\d+)\s*\/\s*(\d+)\s*$/;
 
 function statDonutHtml(ratio, side) {
@@ -667,7 +691,9 @@ function buildMatchBody(stats, lineups) {
     const fields = local[groupKey];
     if (!fields) return '';
     const rows = Object.keys(fields).map(fieldKey =>
-      statBarRow(STAT_FIELD_LABELS[fieldKey] || fieldKey, local[groupKey][fieldKey], visitante[groupKey][fieldKey])
+      statBarRow(
+        (STAT_FIELD_LABELS[fieldKey] || fieldKey) + statInfoHtml(STAT_FIELD_INFO[fieldKey]),
+        local[groupKey][fieldKey], visitante[groupKey][fieldKey])
     ).join('');
     return `
       <div class="stat-group">
