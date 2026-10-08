@@ -1067,7 +1067,7 @@ function buildPredCardHTML(m, data, result = null) {
       }
       return `
         <span class="pred-cell grp-start ${over ? 'is-high' : ''}" title="${realTxt}">${p.toFixed(1)}%${over ? check : ''}</span>
-        <span class="pred-cell ${over ? '' : 'is-high'}" title="${realTxt}">${(100 - p).toFixed(1)}%${over ? '' : check}</span>`;
+        <span class="pred-cell grp-end ${over ? '' : 'is-high'}" title="${realTxt}">${(100 - p).toFixed(1)}%${over ? '' : check}</span>`;
     }).join('');
   }
 

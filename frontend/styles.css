@@ -806,10 +806,25 @@ img { display: block; }
 
 /* Tabla horizontal: una fila por partido, dos lineas (local / visitante) */
 .pred-table {
-  --pred-cols: 64px minmax(140px, 1fr) 30px repeat(6, 62px);
+  /* Las 6 columnas de probabilidad (66px c/u) quedan pegadas al borde derecho:
+     los separadores de grupo se dibujan con el fondo, a 132/264/396px del borde */
+  --pred-cols: 64px minmax(140px, 1fr) 30px repeat(6, 66px);
+  --grp-line: var(--border);
+  --grp-shade: rgba(255, 255, 255, 0.03);
   display: flex;
   flex-direction: column;
-  min-width: 620px;
+  min-width: 640px;
+}
+.pred-head,
+.pred-card {
+  background-image:
+    linear-gradient(var(--grp-line), var(--grp-line)),
+    linear-gradient(var(--grp-line), var(--grp-line)),
+    linear-gradient(var(--grp-line), var(--grp-line)),
+    linear-gradient(var(--grp-shade), var(--grp-shade));
+  background-position: right 132px top, right 264px top, right 396px top, right 132px top;
+  background-size: 1px 100%, 1px 100%, 1px 100%, 132px 100%;
+  background-repeat: no-repeat;
 }
 .pred-head {
   display: grid;
@@ -817,7 +832,7 @@ img { display: block; }
   position: sticky;
   top: 0;
   z-index: 2;
-  background: var(--surface2);
+  background-color: var(--surface2);
   border: 1px solid var(--border);
   border-radius: var(--radius) var(--radius) 0 0;
   font-size: 12px;
@@ -835,27 +850,25 @@ img { display: block; }
   text-align: center;
   font-weight: 500;
   color: rgb(236, 237, 239);
-  border-left: 1px solid var(--border);
 }
 .pred-head-sub {
   padding: 2px 0 7px;
   text-align: center;
   font-family: 'DM Mono', monospace;
 }
-.pred-head-sub:nth-of-type(odd) { border-left: 1px solid var(--border); }
 
 .pred-card {
   display: grid;
   grid-template-columns: var(--pred-cols);
   row-gap: 3px;
   padding: 7px 0;
-  background: var(--surface);
+  background-color: var(--surface);
   border: 1px solid var(--border);
   border-top: none;
   animation: fadeIn 0.25s ease both;
 }
 .pred-card:last-child { border-radius: 0 0 var(--radius) var(--radius); }
-.pred-card:hover { background: var(--surface2); }
+.pred-card:hover { background-color: var(--surface2); }
 .pred-card-loading {
   display: flex;
   align-items: center;
@@ -905,19 +918,19 @@ img { display: block; }
   align-items: center;
   justify-content: center;
   gap: 3px;
-  margin: 0 3px;
   padding: 4px 0;
-  border: 1px solid transparent;
   border-radius: 4px;
   font-size: 12px;
   font-family: 'DM Mono', monospace;
   color: var(--text2);
   cursor: default;
 }
+/* Mas aire entre grupos (16px) que dentro del par (4px) */
+.pred-cell.grp-start { margin: 0 2px 0 8px; }
+.pred-cell.grp-end   { margin: 0 8px 0 2px; }
 /* La mayor probabilidad del par = la opcion que elige el modelo */
 .pred-cell.is-high {
-  background: rgba(70, 194, 82, 0.16);
-  border-color: rgba(70, 194, 82, 0.45);
+  background: rgba(70, 194, 82, 0.18);
   color: rgb(236, 237, 239);
   font-weight: 600;
 }
