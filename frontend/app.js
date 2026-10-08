@@ -1199,7 +1199,7 @@ async function renderEstadisticasTab() {
   tabEl.innerHTML = `
     <div class="stats-tab-wrap">
       <div class="stats-tab-header">
-        <span class="pred-tab-title">Promedio de estadísticas ofensivas</span>
+        <span class="pred-tab-title">Promedio de estadísticas generales</span>
       </div>
       <div class="stats-table-wrap">
         <div id="stats-table-content">

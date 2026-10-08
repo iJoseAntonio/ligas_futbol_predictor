@@ -1094,12 +1094,12 @@ img { display: block; }
 }
 
 .stats-val {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 400;
   font-family: 'DM Mono', monospace;
   color: rgb(236, 237, 239);
 }
-.stats-val.is-sorted { color: var(--accent); font-weight: 600; }
+.stats-val.is-sorted { color: var(--accent); }
 .stats-sort-th {
   cursor: pointer;
   user-select: none;
