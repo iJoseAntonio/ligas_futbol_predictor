@@ -573,7 +573,7 @@ function statBarRow(label, homeVal, awayVal) {
   if (RATIO_RE.test(String(homeVal)) && RATIO_RE.test(String(awayVal))) {
     return statRatioRow(label, homeVal, awayVal);
   }
-  // Si alguno de los dos no es numero (ej. "115/137"), se muestra como texto sin barra
+ 
   const homeNum = typeof homeVal === 'number' ? homeVal : parseFloat(homeVal);
   const awayNum = typeof awayVal === 'number' ? awayVal : parseFloat(awayVal);
   const isNumeric = !isNaN(homeNum) && !isNaN(awayNum) && typeof homeVal !== 'string';
@@ -945,11 +945,9 @@ async function renderPredictionsTab(round) {
     const pred = preds[i];
     if (!pred) {
       // Muestra spinner individual; retryPredictions lo reemplazará cuando cargue
-      return `<div class="pred-card" id="pred-card-${round}-${i}" style="padding:20px;text-align:center">
-                <div style="display:flex;align-items:center;justify-content:center;gap:10px;color:var(--text3);font-size:12px">
-                  <div class="spinner" style="width:16px;height:16px;border-width:2px"></div>
-                  <span>${m.homeName} vs ${m.awayName}</span>
-                </div>
+      return `<div class="pred-card pred-card-loading" id="pred-card-${round}-${i}">
+                <div class="spinner" style="width:16px;height:16px;border-width:2px"></div>
+                <span>${m.homeName} vs ${m.awayName}</span>
               </div>`;
     }
     return `<div class="pred-card" id="pred-card-${round}-${i}" style="animation-delay:${i * 0.05}s">
@@ -957,7 +955,7 @@ async function renderPredictionsTab(round) {
             </div>`;
   }).join('');
 
-  container.innerHTML = html;
+  container.innerHTML = `<div class="pred-table">${PRED_HEADER_HTML}${html}</div>`;
 
   // Lanzar reintentos individuales para tarjetas que no cargaron completamente
   matches.forEach((m, i) => {
@@ -1019,6 +1017,7 @@ async function retryCard(round, m, i, attempt) {
     const card = document.getElementById(`pred-card-${round}-${i}`);
     if (card) {
       card.style.animationDelay = '0s';
+      card.classList.remove('pred-card-loading');
       card.innerHTML = buildPredCardHTML(m, pred, result);
       card.classList.add('pred-card-loaded');
     }
@@ -1034,98 +1033,61 @@ async function retryCard(round, m, i, attempt) {
 }
 
 
+// Cada metrica del modelo: umbral expresado como "+x / -x" (los goles y tiros son
+// enteros, asi que ">= 2 goles" equivale a "+1.5" y ">= 5 tiros" a "+4.5").
+const PRED_METRICS = [
+  { key: 'xg',    label: 'Goles esperados', line: '1.5', realKey: 'xg',           cumpleKey: 'cumple_xg',    unit: 'xG' },
+  { key: 'goles', label: 'Goles anotados',  line: '1.5', realKey: 'goles',        cumpleKey: 'cumple_goles', unit: 'goles' },
+  { key: 'tiros', label: 'Tiros a puerta',  line: '4.5', realKey: 'tiros_puerta', cumpleKey: 'cumple_tiros', unit: 'tiros a puerta' },
+];
+
+const PRED_HEADER_HTML = `
+  <div class="pred-head">
+    <span class="pred-head-match">Partido</span>
+    ${PRED_METRICS.map(mt => `<span class="pred-head-group">${mt.label}</span>`).join('')}
+    ${PRED_METRICS.map(mt => `<span class="pred-head-sub">+${mt.line}</span><span class="pred-head-sub">−${mt.line}</span>`).join('')}
+  </div>`;
+
 function buildPredCardHTML(m, data, result = null) {
   const finished = m.sh !== null;
+  const homeWin = finished && m.sh > m.sa;
+  const awayWin = finished && m.sa > m.sh;
 
-  const hXG  = data.local.xg;
-  const hTir = data.local.tiros;
-  const hGol = data.local.goles;
-  const aXG  = data.visitante.xg;
-  const aTir = data.visitante.tiros;
-  const aGol = data.visitante.goles;
-
-  // ✓ si el modelo acertó (predijo alto y se cumplió, o predijo bajo y no se cumplió)
-  function rChk(predicted, cumple) {
-    if (cumple === undefined || cumple === null) return '';
-    const ok = predicted === cumple;
-    return `<span class="pred-check ${ok ? 'ok' : 'fail'}">${ok ? '✓' : '✗'}</span>`;
-  }
-
-  // 3 barras apiladas
-  const BARS = [
-    { label: 'XG', threshold: '≥ 1.5', key: 'xg'    },
-    { label: 'GA', threshold: '≥ 2',   key: 'goles'  },
-    { label: 'TP', threshold: '≥ 5',   key: 'tiros'  },
-  ];
-
-  function barsHome(d) {
-    return BARS.map(b => {
-      const m = d[b.key];
+  // Dos celdas por metrica: probabilidad de superar (+) y de no superar (-) el umbral.
+  // La mayor de las dos (la prediccion del modelo) va resaltada en verde.
+  function cells(teamPred, teamReal) {
+    return PRED_METRICS.map(mt => {
+      const p = Number(teamPred[mt.key].probabilidad);
+      const over = p >= 50;
+      const realTxt = teamReal ? `Real: ${teamReal[mt.realKey]} ${mt.unit}` : 'Partido aún no jugado';
+      let check = '';
+      if (teamReal && teamReal[mt.cumpleKey] !== undefined && teamReal[mt.cumpleKey] !== null) {
+        const ok = over === teamReal[mt.cumpleKey];
+        check = `<span class="pred-check ${ok ? 'ok' : 'fail'}">${ok ? '✓' : '✗'}</span>`;
+      }
       return `
-        <div class="pred-bar-row">
-          <span class="pred-bar-label">
-            <span class="pbl-abbr">${b.label}</span>
-            <span class="pbl-thresh">${b.threshold}</span>
-          </span>
-          <div class="pred-bar-track">
-            <div class="pred-bar-fill ${m.alto ? 'p-high' : 'p-low'}" style="width:${m.probabilidad}%"></div>
-          </div>
-          <span class="pred-bar-pct">${m.probabilidad}%</span>
-        </div>`;
+        <span class="pred-cell grp-start ${over ? 'is-high' : ''}" title="${realTxt}">${p.toFixed(1)}%${over ? check : ''}</span>
+        <span class="pred-cell ${over ? '' : 'is-high'}" title="${realTxt}">${(100 - p).toFixed(1)}%${over ? '' : check}</span>`;
     }).join('');
   }
 
-  function barsAway(d) {
-    return BARS.map(b => {
-      const m = d[b.key];
-      return `
-        <div class="pred-bar-row away">
-          <span class="pred-bar-pct">${m.probabilidad}%</span>
-          <div class="pred-bar-track away">
-            <div class="pred-bar-fill ${m.alto ? 'p-high' : 'p-low'}" style="width:${m.probabilidad}%"></div>
-          </div>
-          <span class="pred-bar-label" style="text-align:right">
-            <span class="pbl-abbr">${b.label}</span>
-            <span class="pbl-thresh">${b.threshold}</span>
-          </span>
-        </div>`;
-    }).join('');
-  }
-
-  // Stats reales del partido
-  const hReal = result
-    ? `<div class="pred-real">XG ${result.local.xg} ${rChk(hXG.alto, result.local.cumple_xg)} · GA ${result.local.goles} ${rChk(hGol.alto, result.local.cumple_goles)} · TP ${result.local.tiros_puerta} ${rChk(hTir.alto, result.local.cumple_tiros)}</div>` : '';
-  const aReal = result
-    ? `<div class="pred-real away">XG ${result.visitante.xg} ${rChk(aXG.alto, result.visitante.cumple_xg)} · GA ${result.visitante.goles} ${rChk(aGol.alto, result.visitante.cumple_goles)} · TP ${result.visitante.tiros_puerta} ${rChk(aTir.alto, result.visitante.cumple_tiros)}</div>` : '';
-
-  const centerHtml = finished
-    ? `<div class="pred-scorebox">${m.sh}<span>-</span>${m.sa}</div>
-       <div class="pred-vs">FT</div>`
-    : `<div class="pred-vs">VS</div>
-       ${m.date ? `<div class="pred-matchdate">${m.date}</div>` : ''}`;
+  const teamCell = (id, name, win) => `
+    <div class="pred-team-cell">
+      <img src="https://img.sofascore.com/api/v1/team/${id}/image" alt="${name}" onerror="this.style.opacity=0.15">
+      <span class="${win ? 'winner' : ''}">${name}</span>
+    </div>`;
 
   return `
-    <div class="pred-team home">
-      <div class="pred-team-head">
-        <img class="pred-logo" src="https://img.sofascore.com/api/v1/team/${m.homeId}/image"
-             alt="${m.homeName}" onerror="this.style.opacity=0.15">
-        <span class="pred-name">${m.homeName}</span>
-      </div>
-      <div class="pred-bars-stack">${barsHome(data.local)}</div>
-      ${hReal}
+    <div class="pred-time">
+      <span>${m.date || ''}</span>
+      <span class="pred-status">${finished ? 'Finalizado' : (m.hour && m.hour !== 'FT' ? m.hour : '')}</span>
     </div>
-
-    <div class="pred-center">${centerHtml}</div>
-
-    <div class="pred-team away">
-      <div class="pred-team-head away">
-        <span class="pred-name">${m.awayName}</span>
-        <img class="pred-logo" src="https://img.sofascore.com/api/v1/team/${m.awayId}/image"
-             alt="${m.awayName}" onerror="this.style.opacity=0.15">
-      </div>
-      <div class="pred-bars-stack">${barsAway(data.visitante)}</div>
-      ${aReal}
-    </div>`;
+    ${teamCell(m.homeId, m.homeName, homeWin)}
+    <span class="pred-score ${homeWin ? 'winner' : ''}">${finished ? m.sh : ''}</span>
+    ${cells(data.local, result && result.local)}
+    ${teamCell(m.awayId, m.awayName, awayWin)}
+    <span class="pred-score ${awayWin ? 'winner' : ''}">${finished ? m.sa : ''}</span>
+    ${cells(data.visitante, result && result.visitante)}`;
 }
 
 // ── ESTADÍSTICAS TAB ──────────────────────────────────────────────────────
