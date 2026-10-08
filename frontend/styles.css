@@ -1037,10 +1037,8 @@ img { display: block; }
   grid-template-columns: 28px 1fr 36px 110px 100px 100px 95px;
   gap: 6px;
   padding: 6px 8px;
-  font-size: 10px;
-  color: var(--text);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-size: 12px;
+  color: rgb(236, 237, 239);
   border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
@@ -1122,8 +1120,9 @@ img { display: block; }
   white-space: nowrap;
 }
 .stats-sort-th:hover { color: var(--text2); }
+.stats-sort-th.is-sorted { color: var(--accent); font-weight: 600; }
 .sort-arr    { font-size: 9px; color: var(--text); }
-.sort-arr.on { color: var(--text); }
+.sort-arr.on { color: var(--accent); }
 
 .stats-hi-dot {
   font-size: 7px;
@@ -1142,10 +1141,9 @@ img { display: block; }
   border-radius: 2px;
   transition: width 0.7s ease;
 }
-.xg-bar      { background: var(--accent); }
-.tiros-bar   { background: var(--yellow); }
-.goles-bar   { background: var(--green);  }
-.tiros-tot-bar { background: #38bdf8; }
+/* Gris en todas las columnas; el color de acento marca solo la columna ordenada */
+.stats-mini-bar-fill { background: rgba(236, 237, 239, 0.35); }
+.stats-bar-cell.is-sorted .stats-mini-bar-fill { background: var(--accent); }
 
 /* ── RENDIMIENTO TAB ──────────────────────────────────────────────────────── */
 .rend-tab-wrap {

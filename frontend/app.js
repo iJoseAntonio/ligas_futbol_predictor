@@ -517,7 +517,7 @@ const STAT_FIELD_INFO = {
     title: 'Goles esperados (xG)',
     lead:  'xG mide la calidad de una oportunidad y la probabilidad de que la misma termine en gol.',
     body:  'Cada disparo es evaluado individualmente' +
-           'y puede tener un valor entre 0 y 1. El valor xG final es la suma de ' +
+           ' y puede tener un valor entre 0 y 1. El valor xG final es la suma de ' +
            'los valores de todas las oportunidades de remate.',
   },
 };
@@ -1130,49 +1130,48 @@ function buildPredCardHTML(m, data, result = null) {
 
 // ── ESTADÍSTICAS TAB ──────────────────────────────────────────────────────
 let _statsData = null;
-let _statsSort = { col: 'xg_avg', dir: 1 }; // 1 = asc, -1 = desc
+let _statsSort = { col: 'xg_avg', desc: true };
+
+const STATS_COLS = [
+  { key: 'xg_avg',        label: 'Goles esperados', decimals: 2 },
+  { key: 'goles_avg',     label: 'Goles',           decimals: 2 },
+  { key: 'tiros_tot_avg', label: 'Tiros totales',   decimals: 1 },
+  { key: 'tiros_avg',     label: 'Tiros a puerta',  decimals: 1 },
+];
 
 function renderStatsTable() {
   const content = document.getElementById('stats-table-content');
   if (!content || !_statsData) return;
 
   const data = _statsData;
-  const sorted = [...data].sort((a, b) => _statsSort.dir * (b[_statsSort.col] - a[_statsSort.col]));
+  const { col: sortCol, desc } = _statsSort;
+  const sorted = [...data].sort((a, b) => desc ? b[sortCol] - a[sortCol] : a[sortCol] - b[sortCol]);
+  const max = Object.fromEntries(STATS_COLS.map(c => [c.key, Math.max(...data.map(t => t[c.key]))]));
 
-  const maxXG  = Math.max(...data.map(t => t.xg_avg));
-  const maxGol = Math.max(...data.map(t => t.goles_avg));
-  const maxTot = Math.max(...data.map(t => t.tiros_tot_avg));
-  const maxTir = Math.max(...data.map(t => t.tiros_avg));
-
-  const arr = col => {
-    if (_statsSort.col !== col) return `<span class="sort-arr">↕</span>`;
-    return _statsSort.dir === -1
-      ? `<span class="sort-arr on">↓</span>`
-      : `<span class="sort-arr on">↑</span>`;
-  };
-
-  const COLS = [
-    { key: 'xg_avg',        label: 'Goles Esperados' },
-    { key: 'goles_avg',     label: 'Goles'           },
-    { key: 'tiros_tot_avg', label: 'Tiros Totales'   },
-    { key: 'tiros_avg',     label: 'Tiros a Puerta'  },
-  ];
+  const arr = key => key !== sortCol
+    ? `<span class="sort-arr">↕</span>`
+    : `<span class="sort-arr on">${desc ? '↓' : '↑'}</span>`;
 
   let html = `
     <div class="stats-table-head">
       <span>#</span>
       <span>Equipo</span>
       <span style="text-align:center">PJ</span>
-      ${COLS.map(c => `<span class="stats-sort-th" data-col="${c.key}">${c.label} ${arr(c.key)}</span>`).join('')}
+      ${STATS_COLS.map(c => `
+        <span class="stats-sort-th ${c.key === sortCol ? 'is-sorted' : ''}" data-col="${c.key}">${c.label} ${arr(c.key)}</span>`).join('')}
     </div>`;
 
   sorted.forEach((team, i) => {
-    const id  = getTeamId(team.equipo);
+    const id   = getTeamId(team.equipo);
     const logo = id ? `https://img.sofascore.com/api/v1/team/${id}/image` : '';
-    const xgW  = ((team.xg_avg        / maxXG)  * 100).toFixed(0);
-    const golW = ((team.goles_avg      / maxGol) * 100).toFixed(0);
-    const totW = ((team.tiros_tot_avg  / maxTot) * 100).toFixed(0);
-    const tirW = ((team.tiros_avg      / maxTir) * 100).toFixed(0);
+    const cells = STATS_COLS.map(c => {
+      const w = max[c.key] > 0 ? ((team[c.key] / max[c.key]) * 100).toFixed(0) : 0;
+      return `
+        <div class="stats-bar-cell ${c.key === sortCol ? 'is-sorted' : ''}">
+          <div class="stats-bar-header"><span class="stats-val">${parseFloat(team[c.key]).toFixed(c.decimals)}</span></div>
+          <div class="stats-mini-bar-track"><div class="stats-mini-bar-fill" style="width:${w}%"></div></div>
+        </div>`;
+    }).join('');
 
     html += `
       <div class="stats-row" style="animation-delay:${i * 0.03}s">
@@ -1182,22 +1181,7 @@ function renderStatsTable() {
           <span>${team.equipo}</span>
         </div>
         <span class="stats-num-cell">${team.partidos}</span>
-        <div class="stats-bar-cell">
-          <div class="stats-bar-header"><span class="stats-val">${parseFloat(team.xg_avg).toFixed(2)}</span></div>
-          <div class="stats-mini-bar-track"><div class="stats-mini-bar-fill xg-bar" style="width:${xgW}%"></div></div>
-        </div>
-        <div class="stats-bar-cell">
-          <div class="stats-bar-header"><span class="stats-val">${parseFloat(team.goles_avg).toFixed(2)}</span></div>
-          <div class="stats-mini-bar-track"><div class="stats-mini-bar-fill goles-bar" style="width:${golW}%"></div></div>
-        </div>
-        <div class="stats-bar-cell">
-          <div class="stats-bar-header"><span class="stats-val">${parseFloat(team.tiros_tot_avg).toFixed(1)}</span></div>
-          <div class="stats-mini-bar-track"><div class="stats-mini-bar-fill tiros-tot-bar" style="width:${totW}%"></div></div>
-        </div>
-        <div class="stats-bar-cell">
-          <div class="stats-bar-header"><span class="stats-val">${parseFloat(team.tiros_avg).toFixed(1)}</span></div>
-          <div class="stats-mini-bar-track"><div class="stats-mini-bar-fill tiros-bar" style="width:${tirW}%"></div></div>
-        </div>
+        ${cells}
       </div>`;
   });
 
@@ -1207,8 +1191,8 @@ function renderStatsTable() {
     th.addEventListener('click', () => {
       const col = th.dataset.col;
       _statsSort = _statsSort.col === col
-        ? { col, dir: _statsSort.dir * -1 }
-        : { col, dir: -1 };
+        ? { col, desc: !_statsSort.desc }
+        : { col, desc: true };
       renderStatsTable();
     });
   });
