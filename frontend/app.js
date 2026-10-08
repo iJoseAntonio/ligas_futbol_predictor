@@ -1146,7 +1146,6 @@ function renderStatsTable() {
   const data = _statsData;
   const { col: sortCol, desc } = _statsSort;
   const sorted = [...data].sort((a, b) => desc ? b[sortCol] - a[sortCol] : a[sortCol] - b[sortCol]);
-  const max = Object.fromEntries(STATS_COLS.map(c => [c.key, Math.max(...data.map(t => t[c.key]))]));
 
   const arr = key => key !== sortCol
     ? `<span class="sort-arr">↕</span>`
@@ -1164,14 +1163,9 @@ function renderStatsTable() {
   sorted.forEach((team, i) => {
     const id   = getTeamId(team.equipo);
     const logo = id ? `https://img.sofascore.com/api/v1/team/${id}/image` : '';
-    const cells = STATS_COLS.map(c => {
-      const w = max[c.key] > 0 ? ((team[c.key] / max[c.key]) * 100).toFixed(0) : 0;
-      return `
-        <div class="stats-bar-cell ${c.key === sortCol ? 'is-sorted' : ''}">
-          <div class="stats-bar-header"><span class="stats-val">${parseFloat(team[c.key]).toFixed(c.decimals)}</span></div>
-          <div class="stats-mini-bar-track"><div class="stats-mini-bar-fill" style="width:${w}%"></div></div>
-        </div>`;
-    }).join('');
+    const cells = STATS_COLS.map(c => `
+        <span class="stats-val ${c.key === sortCol ? 'is-sorted' : ''}">${parseFloat(team[c.key]).toFixed(c.decimals)}</span>`
+    ).join('');
 
     html += `
       <div class="stats-row" style="animation-delay:${i * 0.03}s">

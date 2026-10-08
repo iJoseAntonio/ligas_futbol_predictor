@@ -1093,24 +1093,13 @@ img { display: block; }
   text-align: center;
 }
 
-.stats-bar-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.stats-bar-header {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
 .stats-val {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 400;
   font-family: 'DM Mono', monospace;
-  color: var(--text);
+  color: rgb(236, 237, 239);
 }
+.stats-val.is-sorted { color: var(--accent); font-weight: 600; }
 .stats-sort-th {
   cursor: pointer;
   user-select: none;
@@ -1129,21 +1118,6 @@ img { display: block; }
   color: var(--green);
   line-height: 1;
 }
-
-.stats-mini-bar-track {
-  height: 3px;
-  background: var(--surface3);
-  border-radius: 2px;
-  overflow: hidden;
-}
-.stats-mini-bar-fill {
-  height: 100%;
-  border-radius: 2px;
-  transition: width 0.7s ease;
-}
-/* Gris en todas las columnas; el color de acento marca solo la columna ordenada */
-.stats-mini-bar-fill { background: rgba(236, 237, 239, 0.35); }
-.stats-bar-cell.is-sorted .stats-mini-bar-fill { background: var(--accent); }
 
 /* ── RENDIMIENTO TAB ──────────────────────────────────────────────────────── */
 .rend-tab-wrap {
