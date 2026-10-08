@@ -1147,17 +1147,16 @@ function renderStatsTable() {
   const { col: sortCol, desc } = _statsSort;
   const sorted = [...data].sort((a, b) => desc ? b[sortCol] - a[sortCol] : a[sortCol] - b[sortCol]);
 
-  const arr = key => key !== sortCol
-    ? `<span class="sort-arr">↕</span>`
-    : `<span class="sort-arr on">${desc ? '↓' : '↑'}</span>`;
+  // Triangulo bajo el encabezado, como Sofascore: apunta hacia abajo (mayor a menor) o arriba
+  const tri = key => `<svg class="sort-tri ${key === sortCol && !desc ? 'asc' : ''}" viewBox="0 0 16 16" aria-hidden="true"><path d="M13 5H3l5 8z"/></svg>`;
 
   let html = `
     <div class="stats-table-head">
       <span>#</span>
-      <span>Equipo</span>
-      <span style="text-align:center">PJ</span>
+      <span class="stats-th-left">Equipo</span>
+      <span>PJ</span>
       ${STATS_COLS.map(c => `
-        <span class="stats-sort-th ${c.key === sortCol ? 'is-sorted' : ''}" data-col="${c.key}">${c.label} ${arr(c.key)}</span>`).join('')}
+        <span class="stats-sort-th ${c.key === sortCol ? 'is-sorted' : ''}" data-col="${c.key}" title="${c.label}">${c.label}${tri(c.key)}</span>`).join('')}
     </div>`;
 
   sorted.forEach((team, i) => {
