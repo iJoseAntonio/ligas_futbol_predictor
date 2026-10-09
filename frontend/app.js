@@ -1585,7 +1585,7 @@ async function renderRendimientoTab() {
       // Aciertos exactos por metrica: cada % de ronda es aciertos / total de esa ronda
       const hits = key => rounds.reduce((s, r) => s + Math.round(r[`${key}_pct`] * r.total / 100), 0);
       backHtml = `
-        <p class="rend-intro">Antes de cada ronda, el modelo predijo si cada equipo superaría el umbral de cada métrica. Cuenta como acierto tanto si predijo que lo superaría y lo superó, como si predijo que no lo superaría y no lo superó.</p>
+        <p class="rend-intro">Antes de cada ronda, el modelo predijo si cada equipo superaría el umbral de cada métrica.</p>
         <div class="acc-summary">
           ${REND_METRICS.map(mt => `
           <div class="acc-card">
