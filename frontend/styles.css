@@ -938,7 +938,6 @@ img { display: block; }
 }
 .pred-team-cell img { width: 20px; height: 20px; object-fit: contain; flex-shrink: 0; }
 .pred-team-cell span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pred-team-cell .winner { font-weight: 700; }
 
 .pred-cell {
   display: flex;

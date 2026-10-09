@@ -1050,8 +1050,6 @@ const PRED_HEADER_HTML = `
 
 function buildPredCardHTML(m, data, result = null) {
   const finished = m.sh !== null;
-  const homeWin = finished && m.sh > m.sa;
-  const awayWin = finished && m.sa > m.sh;
 
   // Dos celdas por metrica: probabilidad de superar (+) y de no superar (-) el umbral.
   // La mayor de las dos (la prediccion del modelo) va resaltada en verde.
@@ -1066,10 +1064,10 @@ function buildPredCardHTML(m, data, result = null) {
     }).join('');
   }
 
-  const teamCell = (id, name, win) => `
+  const teamCell = (id, name) => `
     <div class="pred-team-cell">
       <img src="https://img.sofascore.com/api/v1/team/${id}/image" alt="${name}" onerror="this.style.opacity=0.15">
-      <span class="${win ? 'winner' : ''}">${name}</span>
+      <span>${name}</span>
     </div>`;
 
   return `
@@ -1077,9 +1075,9 @@ function buildPredCardHTML(m, data, result = null) {
       <span>${m.date || ''}</span>
       <span class="pred-status">${finished ? 'Finalizado' : (m.hour && m.hour !== 'FT' ? m.hour : '')}</span>
     </div>
-    ${teamCell(m.homeId, m.homeName, homeWin)}
+    ${teamCell(m.homeId, m.homeName)}
     ${cells(data.local, result && result.local)}
-    ${teamCell(m.awayId, m.awayName, awayWin)}
+    ${teamCell(m.awayId, m.awayName)}
     ${cells(data.visitante, result && result.visitante)}`;
 }
 
