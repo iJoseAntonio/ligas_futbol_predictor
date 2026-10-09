@@ -1432,9 +1432,9 @@ async function renderRendimientoTab() {
     <div class="rend-tab-wrap">
       <div class="rend-sub-nav">
         <div class="rend-sub-tabs">
-          <button class="rend-sub-tab active" data-section="backtesting">Backtesting</button>
-          <button class="rend-sub-tab" data-section="comp">Comparación de Algoritmos</button>
-          <button class="rend-sub-tab" data-section="shap">Importancia de Variables</button>
+          <button class="rend-sub-tab active" data-section="backtesting">Aciertos por ronda</button>
+          <button class="rend-sub-tab" data-section="comp">Comparación de algoritmos</button>
+          <button class="rend-sub-tab" data-section="shap">Importancia de variables</button>
         </div>
       </div>
       <div id="rend-tab-content">
@@ -1460,6 +1460,13 @@ async function renderRendimientoTab() {
       return pct >= 70 ? 'acc-green' : pct >= 50 ? 'acc-yellow' : 'acc-red';
     }
 
+    // Mismo orden, nombres y umbrales que la pestana Predicciones
+    const REND_METRICS = [
+      { key: 'xg',    label: 'Goles esperados +1.5' },
+      { key: 'goles', label: 'Goles anotados +1.5' },
+      { key: 'tiros', label: 'Tiros a puerta +4.5' },
+    ];
+
     // ── Sección Backtesting ──────────────────────────────────────────────
     let backHtml = '';
     if (!perfData.rounds || !perfData.rounds.length) {
@@ -1468,42 +1475,33 @@ async function renderRendimientoTab() {
     } else {
       const { resumen, rounds } = perfData;
       const totalPred = rounds.reduce((s, r) => s + r.total, 0);
+      // Aciertos exactos por metrica: cada % de ronda es aciertos / total de esa ronda
+      const hits = key => rounds.reduce((s, r) => s + Math.round(r[`${key}_pct`] * r.total / 100), 0);
       backHtml = `
+        <p class="rend-intro">Antes de cada ronda, el modelo predijo si cada equipo superaría el umbral de cada métrica. Aquí se compara esa predicción con lo que pasó en el partido.</p>
         <div class="acc-summary">
+          ${REND_METRICS.map(mt => `
           <div class="acc-card">
-            <span class="acc-card-label">Goles Esperados ≥ 1.5</span>
-            <span class="acc-card-value ${accColor(resumen.xg_accuracy)}">${resumen.xg_accuracy}%</span>
+            <span class="acc-card-label">${mt.label}</span>
+            <span class="acc-card-value ${accColor(resumen[`${mt.key}_accuracy`])}">${resumen[`${mt.key}_accuracy`]}%</span>
             <span class="acc-card-sub">Accuracy global</span>
-          </div>
-          <div class="acc-card">
-            <span class="acc-card-label">Tiros a Puerta ≥ 5</span>
-            <span class="acc-card-value ${accColor(resumen.tiros_accuracy)}">${resumen.tiros_accuracy}%</span>
-            <span class="acc-card-sub">Accuracy global</span>
-          </div>
-          <div class="acc-card">
-            <span class="acc-card-label">Goles Anotados ≥ 2</span>
-            <span class="acc-card-value ${accColor(resumen.goles_accuracy)}">${resumen.goles_accuracy}%</span>
-            <span class="acc-card-sub">Accuracy global</span>
-          </div>
+            <span class="acc-card-count">Acertó ${hits(mt.key)} de ${totalPred} predicciones</span>
+          </div>`).join('')}
         </div>
-        <div class="rend-meta">${resumen.total_rondas} jornadas evaluadas · ${totalPred} predicciones</div>
+        <div class="rend-meta">${resumen.total_rondas} rondas evaluadas · ${totalPred} predicciones por métrica (9 partidos × 2 equipos por ronda)</div>
         <div class="rend-table-wrap">
           <div class="rend-table-head">
             <span>Ronda</span>
             <span>Semana del</span>
             <span style="text-align:center">n</span>
-            <span>Goles Esperados ≥ 1.5</span>
-            <span>Tiros a Puerta ≥ 5</span>
-            <span>Goles Anotados ≥ 2</span>
+            ${REND_METRICS.map(mt => `<span>${mt.label}</span>`).join('')}
           </div>
           ${rounds.map((r, i) => `
             <div class="rend-table-row" style="animation-delay:${i * 0.05}s">
               <span class="rend-jornada">${r.jornada}</span>
               <span class="rend-fecha">${r.fecha}</span>
               <span class="rend-n">${r.total}</span>
-              <span class="acc-badge ${accColor(r.xg_pct)}">${r.xg_pct}%</span>
-              <span class="acc-badge ${accColor(r.tiros_pct)}">${r.tiros_pct}%</span>
-              <span class="acc-badge ${accColor(r.goles_pct)}">${r.goles_pct}%</span>
+              ${REND_METRICS.map(mt => `<span class="acc-badge ${accColor(r[`${mt.key}_pct`])}">${r[`${mt.key}_pct`]}%</span>`).join('')}
             </div>`).join('')}
         </div>`;
     }
@@ -1511,12 +1509,12 @@ async function renderRendimientoTab() {
     // ── Sección Comparación ───────────────────────────────────────────────
     let compHtml = '';
     if (metricsData) {
-      const varKeys = Object.keys(metricsData);
+      const varKeys = REND_METRICS.map(mt => mt.key).filter(k => metricsData[k]);
       compHtml = `
         <div class="comp-var-tabs" id="comp-var-tabs">
           ${varKeys.map((k, i) => `
             <button class="comp-var-tab${i === 0 ? ' active' : ''}" data-var="${k}">
-              ${metricsData[k].label}
+              ${REND_METRICS.find(mt => mt.key === k).label}
             </button>`).join('')}
         </div>
         <div class="comp-content">
@@ -1544,11 +1542,7 @@ async function renderRendimientoTab() {
     // ── Sección Importancia de Variables (SHAP) ──────────────────────────
     let shapHtml = '';
     if (shapData) {
-      const shapTargets = {
-        xg:    'Goles Esperados ≥ 1.5',
-        tiros: 'Tiros a Puerta ≥ 5',
-        goles: 'Goles Anotados ≥ 2',
-      };
+      const shapTargets = Object.fromEntries(REND_METRICS.map(mt => [mt.key, mt.label]));
       shapHtml = `
         <div class="shap-header-row">
           <div class="comp-var-tabs" id="shap-var-tabs">
@@ -1559,7 +1553,7 @@ async function renderRendimientoTab() {
           <button class="shap-sort-btn" id="shap-sort-btn">↓ Desc</button>
         </div>
         <div class="comp-content">
-          <p class="shap-chart-title">Top 15 Variables más Influyentes · Valor SHAP Promedio</p>
+          <p class="shap-chart-title">Top 15 variables más influyentes · valor SHAP promedio</p>
           <div class="shap-chart-wrap">
             <canvas id="shap-bar-chart"></canvas>
           </div>
@@ -1588,7 +1582,7 @@ async function renderRendimientoTab() {
         });
         // Lazy-init: charts solo cuando el canvas es visible
         if (target === 'comp' && metricsData && !_radarChart) {
-          renderCompChart(Object.keys(metricsData)[0] || 'xg', metricsData);
+          renderCompChart('xg', metricsData);
         }
         if (target === 'shap' && shapData && !_shapChart) {
           renderShapChart('xg', shapData);
