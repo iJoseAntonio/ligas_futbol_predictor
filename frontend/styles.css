@@ -1242,10 +1242,11 @@ img { display: block; }
   width: fit-content;
   color: var(--text);
 }
-/* El numero va del color de la fila; el recuadro lleva el color del semaforo */
-.acc-badge.acc-green  { background: rgba(21, 177, 104, 0.28); color: var(--text); }
-.acc-badge.acc-yellow { background: rgba(240, 165, 0, 0.28);  color: var(--text); }
-.acc-badge.acc-red    { background: rgba(226, 75, 74, 0.28);  color: var(--text); }
+/* Recuadro solido estilo nota de Sofascore: el color va en el fondo y el
+   numero en blanco (tonos algo oscuros para que el blanco contraste) */
+.acc-badge.acc-green  { background: #0BB32A; color: #fff; }
+.acc-badge.acc-yellow { background: #C99A00; color: #fff; }
+.acc-badge.acc-red    { background: #D93B2B; color: #fff; }
 
 /* ── RENDIMIENTO SUB-TABS ────────────────────────────────────────────────── */
 .rend-sub-nav {
