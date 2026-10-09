@@ -1195,10 +1195,12 @@ img { display: block; }
 .rend-table-row.is-open { background: var(--surface3); }
 .rend-chevron {
   display: inline-block;
-  width: 10px;
-  margin-right: 4px;
-  font-size: 13px;
-  color: var(--text2);
+  width: 12px;
+  margin-right: 5px;
+  font-size: 16px;
+  line-height: 1;
+  text-align: center;
+  color: var(--text-strong);
   transition: transform 0.15s;
 }
 .rend-table-row.is-open .rend-chevron { transform: rotate(90deg); }
@@ -1250,7 +1252,7 @@ img { display: block; }
 .rd-empty, .rd-empty-cell { padding: 12px 16px; font-size: 12px; color: var(--text3); }
 
 .rend-jornada {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--text);
   font-family: 'DM Sans', sans-serif;
@@ -1260,14 +1262,14 @@ img { display: block; }
 }
 
 .rend-fecha {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 400;
   color: var(--text);
   font-family: 'DM Sans', sans-serif;
 }
 
 .rend-n {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 400;
   color: var(--text);
   font-family: 'DM Sans', sans-serif;

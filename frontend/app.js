@@ -1491,15 +1491,14 @@ function buildRoundDetailHtml(matches, preds, results) {
   const teamLine = (id, name, teamPred, teamReal) => {
     total++;
     const cells = PRED_METRICS.map(mt => {
-      const p = Number(teamPred[mt.key].probabilidad);
       const over = teamPred[mt.key].alto;  // decision del modelo (un 50.0% redondeado puede ser clase 0)
       const ok = over === teamReal[`cumple_${mt.key}`];
       if (ok) hits[mt.key]++;
       return `
         <span class="rd-cell ${ok ? 'ok' : 'fail'}" title="${ok ? 'Acertó' : 'Falló'}">
           <span class="rd-mark">${ok ? '✓' : '✗'}</span>
-          <span>${over ? '+' : '−'}${mt.line} · ${(over ? p : 100 - p).toFixed(1)}%</span>
-          <span class="rd-real">Real ${teamReal[mt.realKey]}</span>
+          <span>${over ? '+' : '−'}${mt.line}</span>
+          <span class="rd-real">· Real ${teamReal[mt.realKey]}</span>
         </span>`;
     }).join('');
     return `
@@ -1570,9 +1569,9 @@ async function renderRendimientoTab() {
 
     // Mismo orden, nombres y umbrales que la pestana Predicciones
     const REND_METRICS = [
-      { key: 'xg',    label: 'Goles esperados +1.5' },
-      { key: 'goles', label: 'Goles anotados +1.5' },
-      { key: 'tiros', label: 'Tiros a puerta +4.5' },
+      { key: 'xg',    label: 'Goles esperados ±1.5' },
+      { key: 'goles', label: 'Goles anotados ±1.5' },
+      { key: 'tiros', label: 'Tiros a puerta ±4.5' },
     ];
 
     // ── Sección Backtesting ──────────────────────────────────────────────
@@ -1586,7 +1585,7 @@ async function renderRendimientoTab() {
       // Aciertos exactos por metrica: cada % de ronda es aciertos / total de esa ronda
       const hits = key => rounds.reduce((s, r) => s + Math.round(r[`${key}_pct`] * r.total / 100), 0);
       backHtml = `
-        <p class="rend-intro">Antes de cada ronda, el modelo predijo si cada equipo superaría el umbral de cada métrica. Aquí se compara esa predicción con lo que pasó en el partido.</p>
+        <p class="rend-intro">Antes de cada ronda, el modelo predijo si cada equipo superaría el umbral de cada métrica. Cuenta como acierto tanto si predijo que lo superaría y lo superó, como si predijo que no lo superaría y no lo superó.</p>
         <div class="acc-summary">
           ${REND_METRICS.map(mt => `
           <div class="acc-card">
