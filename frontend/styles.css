@@ -1710,6 +1710,8 @@ img { display: block; }
   transition: opacity 0.15s, visibility 0.15s;
   pointer-events: none;
 }
+/* Icono junto al borde derecho: el recuadro se abre hacia la izquierda */
+.stat-info-right .stat-info-tip { left: auto; right: -8px; transform: none; }
 .stat-info:hover .stat-info-tip,
 .stat-info:focus .stat-info-tip { opacity: 1; visibility: visible; }
 .stat-info-title, .stat-info-lead { font-weight: 700; }

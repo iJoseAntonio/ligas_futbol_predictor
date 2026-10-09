@@ -525,10 +525,10 @@ const STAT_FIELD_INFO = {
   },
 };
 
-function statInfoHtml(info) {
+function statInfoHtml(info, alignRight = false) {
   if (!info) return '';
   return `
-    <span class="stat-info" tabindex="0" aria-label="Qué es ${info.title}">
+    <span class="stat-info${alignRight ? ' stat-info-right' : ''}" tabindex="0" aria-label="Qué es ${info.title}">
       <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c5.52 0 10 4.48 10 10s-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2m0 2c-4.41 0-8 3.59-8 8s3.59 8 8 8 8-3.59 8-8-3.59-8-8-8m1 7v6h-2v-6zm0-4v2h-2V7z"/></svg>
       <span class="stat-info-tip" role="tooltip">
         <strong class="stat-info-title">${info.title}</strong>
@@ -1033,10 +1033,35 @@ const PRED_METRICS = [
   { key: 'tiros', label: 'Tiros a puerta',  line: '4.5', realKey: 'tiros_puerta' },
 ];
 
+const PRED_BASE_TXT = 'La estimación se basa en el promedio de las estadísticas del equipo en sus últimos 3 y 5 partidos.';
+const PRED_INFO = {
+  xg: {
+    title: 'Goles esperados',
+    lead:  'El modelo estima la probabilidad de que el equipo genere 1.5 o más goles esperados (xG) en el partido.',
+    body:  'El xG mide la calidad de las ocasiones de gol: cada disparo vale entre 0 y 1 según qué tan probable era que ' +
+           'terminara en gol, y el xG del equipo es la suma de todos sus disparos. +1.5 es la probabilidad de generar ' +
+           '1.5 de xG o más; −1.5, la de generar menos. Ambas suman 100%, y la mayor, resaltada en verde, es la opción ' +
+           'que elige el modelo. ' + PRED_BASE_TXT,
+  },
+  goles: {
+    title: 'Goles anotados',
+    lead:  'El modelo estima la probabilidad de que el equipo anote 2 o más goles en el partido.',
+    body:  '+1.5 es la probabilidad de anotar 2 goles o más; −1.5, la de anotar 0 o 1 gol. Ambas suman 100%, y la mayor, ' +
+           'resaltada en verde, es la opción que elige el modelo. ' + PRED_BASE_TXT,
+  },
+  tiros: {
+    title: 'Tiros a puerta',
+    lead:  'El modelo estima la probabilidad de que el equipo realice 5 o más tiros a puerta en el partido.',
+    body:  'Un tiro a puerta es un remate dirigido al arco que termina en gol o es atajado por el arquero. +4.5 es la ' +
+           'probabilidad de realizar 5 tiros a puerta o más; −4.5, la de realizar 4 o menos. Ambas suman 100%, y la ' +
+           'mayor, resaltada en verde, es la opción que elige el modelo. ' + PRED_BASE_TXT,
+  },
+};
+
 const PRED_HEADER_HTML = `
   <div class="pred-head">
     <span class="pred-head-match">Partido</span>
-    ${PRED_METRICS.map(mt => `<span class="pred-head-group">${mt.label}${statInfoHtml(STAT_FIELD_INFO[mt.key])}</span>`).join('')}
+    ${PRED_METRICS.map((mt, i) => `<span class="pred-head-group">${mt.label}${statInfoHtml(PRED_INFO[mt.key], i === PRED_METRICS.length - 1)}</span>`).join('')}
     ${PRED_METRICS.map(mt => `<span class="pred-head-sub grp-start">+${mt.line}</span><span class="pred-head-sub grp-end">−${mt.line}</span>`).join('')}
   </div>`;
 
