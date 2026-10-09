@@ -405,8 +405,10 @@ async function openMatchView(m) {
   const meta = ROUND_META[currentRound] || {};
   document.getElementById('match-context-text').textContent =
     meta.stage ? `${meta.stage} · Ronda ${meta.displayNum}` : 'Liga 1';
+  document.querySelector('.layout').classList.remove('show-partidos');
   document.querySelector('.right-panel').classList.add('match-view-open');
   document.querySelector('.right-panel').scrollTop = 0;
+  if (MOBILE_MQ.matches) window.scrollTo(0, 0);
 
   document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -895,11 +897,16 @@ function updateCountdown() {
 }
 
 // ── TABS ──────────────────────────────────────────────────────────────────
-const TAB_NAMES = ['clasificaciones', 'estadisticas', 'predicciones', 'rendimiento'];
+const TAB_NAMES = ['partidos', 'clasificaciones', 'estadisticas', 'predicciones', 'rendimiento'];
+
+// En celular la lista de partidos (panel izquierdo) pasa a ser la pestana "Partidos"
+const MOBILE_MQ = window.matchMedia('(max-width: 900px)');
 
 function activateTab(name, updateHash = true) {
   if (!TAB_NAMES.includes(name)) return;
+  if (name === 'partidos' && !MOBILE_MQ.matches) name = 'clasificaciones';
 
+  document.querySelector('.layout').classList.toggle('show-partidos', name === 'partidos');
   document.querySelector('.right-panel').classList.remove('match-view-open');
   document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -933,6 +940,13 @@ function setupMainTabs() {
   if (TAB_NAMES.includes(initial) && initial !== 'clasificaciones') {
     activateTab(initial, false);
   }
+
+  // Al pasar de celular a escritorio, "Partidos" deja de existir como pestana
+  MOBILE_MQ.addEventListener('change', (e) => {
+    if (!e.matches && document.querySelector('.layout').classList.contains('show-partidos')) {
+      activateTab('clasificaciones');
+    }
+  });
 }
 
 function isPredTabActive() {
@@ -1498,7 +1512,7 @@ function buildRoundDetailHtml(matches, preds, results) {
         <span class="rd-cell ${ok ? 'ok' : 'fail'}" title="${ok ? 'Acertó' : 'Falló'}">
           <span class="rd-mark">${ok ? '✓' : '✗'}</span>
           <span>${over ? '+' : '−'}${mt.line}</span>
-          <span class="rd-real">· Real ${teamReal[mt.realKey]}</span>
+          <span class="rd-real"><span class="rd-sep">· </span>Real ${teamReal[mt.realKey]}</span>
         </span>`;
     }).join('');
     return `
