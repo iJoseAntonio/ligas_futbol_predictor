@@ -812,7 +812,7 @@ function renderDestacado(round) {
 function buildDestacadoHTML(m, showScore) {
   const centerHTML = showScore
     ? `<div class="match-score-feat">${m.sh} - ${m.sa}</div>
-       <div class="match-total-goals">${m.sh + m.sa} goles totales</div>`
+       <div class="match-feat-status">Finalizado</div>`
     : `<div class="match-upcoming-time">${m.hour || '--:--'}</div>
        <div class="match-upcoming-label">${m.date || 'Próximo'}</div>`;
 
