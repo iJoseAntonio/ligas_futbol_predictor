@@ -844,13 +844,13 @@ img { display: block; }
 
 /* Tabla horizontal: una fila por partido, dos lineas (local / visitante) */
 .pred-table {
-  /* Las 6 columnas de probabilidad (66px c/u) quedan pegadas al borde derecho:
-     los separadores de grupo se dibujan con el fondo, a 132/264/396px del borde */
-  --pred-cols: 64px minmax(140px, 1fr) repeat(6, 66px);
+  /* Las 6 columnas de probabilidad (74px c/u) quedan pegadas al borde derecho:
+     los separadores de grupo se dibujan con el fondo, a 148/296/444px del borde */
+  --pred-cols: 64px minmax(140px, 1fr) repeat(6, 74px);
   --grp-line: var(--border);
   display: flex;
   flex-direction: column;
-  min-width: 640px;
+  min-width: 690px;
 }
 .pred-head,
 .pred-card {
@@ -858,7 +858,7 @@ img { display: block; }
     linear-gradient(var(--grp-line), var(--grp-line)),
     linear-gradient(var(--grp-line), var(--grp-line)),
     linear-gradient(var(--grp-line), var(--grp-line));
-  background-position: right 132px top, right 264px top, right 396px top;
+  background-position: right 148px top, right 296px top, right 444px top;
   background-size: 1px 100%, 1px 100%, 1px 100%;
   background-repeat: no-repeat;
 }
@@ -950,9 +950,12 @@ img { display: block; }
   color: var(--text2);
   cursor: default;
 }
-/* Mas aire entre grupos (16px) que dentro del par (4px) */
-.pred-cell.grp-start { margin: 0 2px 0 8px; }
-.pred-cell.grp-end   { margin: 0 8px 0 2px; }
+/* El recuadro mide siempre 56px; cada par va junto (4px) y el espacio
+   sobrante de la columna queda hacia afuera, separando los grupos */
+.pred-cell { width: 56px; }
+.pred-cell.grp-start, .pred-head-sub.grp-start { justify-self: end;   margin-right: 2px; }
+.pred-cell.grp-end,   .pred-head-sub.grp-end   { justify-self: start; margin-left: 2px; }
+.pred-head-sub { width: 56px; }
 /* La mayor probabilidad del par = la opcion que elige el modelo */
 .pred-cell.is-high {
   background: var(--home-soft);
