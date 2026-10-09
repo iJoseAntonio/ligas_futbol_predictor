@@ -23,7 +23,7 @@
   color-scheme: dark;
   --text-strong: #ECEDEF;              /* texto principal resaltado */
   --home:        #46C252;              /* equipo local */
-  --home-soft:   var(--home-soft);
+  --home-soft:   rgba(70, 194, 82, 0.18);
   --away:        #7A84FF;              /* equipo visitante */
   --track:       rgba(255, 255, 255, 0.12);
   --hover:       rgba(255, 255, 255, 0.05);
