@@ -1518,19 +1518,32 @@ function buildRoundDetailHtml(matches, preds, results) {
 }
 
 // ── RENDIMIENTO TAB ────────────────────────────────────────────────────────
+// Secciones tecnicas (Comparacion de algoritmos e Importancia de variables/SHAP),
+// ocultas por ahora para el usuario final. Poner en true para reactivarlas.
+const REND_SHOW_TECH = false;
+
+const REND_INTRO_TXT = 'Antes de cada ronda, el modelo predijo si cada equipo superaría el umbral de cada métrica.';
+
 async function renderRendimientoTab() {
   const tabEl = document.getElementById('tab-rendimiento');
   if (!tabEl) return;
 
-  tabEl.innerHTML = `
-    <div class="rend-tab-wrap">
-      <div class="rend-sub-nav">
+  const headerHtml = REND_SHOW_TECH
+    ? `<div class="rend-sub-nav">
         <div class="rend-sub-tabs">
           <button class="rend-sub-tab active" data-section="backtesting">Aciertos por ronda</button>
           <button class="rend-sub-tab" data-section="comp">Comparación de algoritmos</button>
           <button class="rend-sub-tab" data-section="shap">Importancia de variables</button>
         </div>
-      </div>
+      </div>`
+    : `<div class="pred-tab-header">
+        <span class="pred-tab-title">Aciertos por ronda</span>
+        <span class="pred-legend">${REND_INTRO_TXT}</span>
+      </div>`;
+
+  tabEl.innerHTML = `
+    <div class="rend-tab-wrap">
+      ${headerHtml}
       <div id="rend-tab-content">
         <div class="loading-state"><div class="spinner"></div><span>Calculando...</span></div>
       </div>
@@ -1541,14 +1554,14 @@ async function renderRendimientoTab() {
   try {
     const [perfRes, metricsRes, shapRes] = await Promise.all([
       fetch(`${API_URL}/model-performance`),
-      fetch(`${API_URL}/model-metrics`),
-      fetch(`${API_URL}/shap-values`),
+      REND_SHOW_TECH ? fetch(`${API_URL}/model-metrics`) : null,
+      REND_SHOW_TECH ? fetch(`${API_URL}/shap-values`)   : null,
     ]);
 
     if (!perfRes.ok) throw new Error();
     const perfData    = await perfRes.json();
-    const metricsData = metricsRes.ok ? await metricsRes.json() : null;
-    const shapData    = shapRes.ok    ? await shapRes.json()    : null;
+    const metricsData = metricsRes && metricsRes.ok ? await metricsRes.json() : null;
+    const shapData    = shapRes && shapRes.ok       ? await shapRes.json()    : null;
 
     function accColor(pct) {
       return pct >= 70 ? 'acc-green' : pct >= 50 ? 'acc-yellow' : 'acc-red';
@@ -1572,7 +1585,7 @@ async function renderRendimientoTab() {
       // Aciertos exactos por metrica: cada % de ronda es aciertos / total de esa ronda
       const hits = key => rounds.reduce((s, r) => s + Math.round(r[`${key}_pct`] * r.total / 100), 0);
       backHtml = `
-        <p class="rend-intro">Antes de cada ronda, el modelo predijo si cada equipo superaría el umbral de cada métrica.</p>
+        ${REND_SHOW_TECH ? `<p class="rend-intro">${REND_INTRO_TXT}</p>` : ''}
         <div class="acc-summary">
           ${REND_METRICS.map(mt => `
           <div class="acc-card">
@@ -1662,8 +1675,9 @@ async function renderRendimientoTab() {
 
     content.innerHTML = `
       <div id="rend-section-backtesting" class="rend-section">${backHtml}</div>
+      ${REND_SHOW_TECH ? `
       <div id="rend-section-comp"        class="rend-section comp-section" style="display:none">${compHtml}</div>
-      <div id="rend-section-shap"        class="rend-section comp-section" style="display:none">${shapHtml}</div>`;
+      <div id="rend-section-shap"        class="rend-section comp-section" style="display:none">${shapHtml}</div>` : ''}`;
 
     // Acordeon: clic en una ronda para ver que acerto y que fallo el modelo
     content.querySelectorAll('.rend-table-row').forEach(row => {
