@@ -869,8 +869,7 @@ img { display: block; }
   top: 0;
   z-index: 2;
   background-color: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius) var(--radius) 0 0;
+  border-bottom: 1px solid var(--border);
   font-size: 12px;
   font-weight: 400;
   color: var(--text-strong);
@@ -897,13 +896,13 @@ img { display: block; }
   grid-template-columns: var(--pred-cols);
   row-gap: 3px;
   padding: 7px 0;
-  background-color: var(--surface);
-  border: 1px solid var(--border);
-  border-top: none;
+  border-bottom: 1px solid var(--border);
   animation: fadeIn 0.25s ease both;
+  transition: background-color 0.15s;
 }
-.pred-card:last-child { border-radius: 0 0 var(--radius) var(--radius); }
-.pred-card:hover { background-color: var(--surface2); }
+/* Fondo alternado por partido, como la tabla de Estadisticas */
+.pred-card:nth-child(odd) { background-color: var(--surface2); }
+.pred-card:hover { background-color: var(--surface3); }
 .pred-card-loading {
   display: flex;
   align-items: center;
