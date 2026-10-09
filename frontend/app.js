@@ -770,10 +770,7 @@ function getPrediction(m) {
 // Precarga en segundo plano las predicciones de la ronda visible, para que la
 // pestana Predicciones ya tenga los datos al abrirla.
 function prefetchPredictions(round) {
-  (MATCHES[round] || []).forEach(m => {
-    getPrediction(m);
-    if (m.sh !== null) getMatchResult(m);
-  });
+  (MATCHES[round] || []).forEach(m => getPrediction(m));
 }
 
 // ── ROUND SELECT ──────────────────────────────────────────────────────────
@@ -973,11 +970,7 @@ async function renderPredictionsTab(round) {
   container.innerHTML =
     `<div class="loading-state"><div class="spinner"></div><span>Cargando predicciones…</span></div>`;
 
-  // Predicciones del modelo + resultados reales en paralelo
-  const [preds, results] = await Promise.all([
-    Promise.all(matches.map(m => getPrediction(m))),
-    Promise.all(matches.map(m => m.sh !== null ? getMatchResult(m) : Promise.resolve(null))),
-  ]);
+  const preds = await Promise.all(matches.map(m => getPrediction(m)));
 
   // Si mientras esperábamos la API el usuario cambió de jornada, esta respuesta
   // ya quedó obsoleta: no pisar el contenido de la jornada que se ve ahora.
@@ -993,32 +986,21 @@ async function renderPredictionsTab(round) {
               </div>`;
     }
     return `<div class="pred-card" id="pred-card-${round}-${i}">
-              ${buildPredCardHTML(m, pred, results[i])}
+              ${buildPredCardHTML(m, pred)}
             </div>`;
   }).join('');
 
   container.innerHTML = `<div class="pred-table">${PRED_HEADER_HTML}${html}</div>`;
 
-  // Lanzar reintentos individuales para tarjetas que no cargaron completamente
+  // Lanzar reintentos individuales para los partidos cuya prediccion no cargo
   matches.forEach((m, i) => {
-    const hasPred = !!preds[i];
-    const needsResult = m.sh !== null;
-    const hasResult = !!results[i];
-
-    if (!hasPred || (needsResult && !hasResult)) {
-      retryCard(round, m, i, 1);
-    }
+    if (!preds[i]) retryCard(round, m, i, 1);
   });
 }
 
-/**
- * Gestiona de forma unificada el reintento de carga de una tarjeta de partido,
- * ya sea que le falte la predicción o los checks de resultados reales.
- * Reintenta hasta 3 veces con tiempo de espera incremental.
- */
+// Reintenta hasta 3 veces (esperando 2, 4 y 6 s) la prediccion de un partido que no cargo.
 async function retryCard(round, m, i, attempt) {
   if (attempt > 3) {
-    // Si tras 3 intentos no cargó la predicción, mostrar error
     const card = document.getElementById(`pred-card-${round}-${i}`);
     if (card && card.querySelector('.spinner')) {
       card.innerHTML = `<div style="padding:14px;color:var(--text3);font-size:12px;text-align:center">
@@ -1028,48 +1010,17 @@ async function retryCard(round, m, i, attempt) {
     return;
   }
 
-  // Espera incremental (2s, 4s, 6s)
   await new Promise(resolve => setTimeout(resolve, attempt * 2000));
 
-  // Obtener estado actual (de caché si ya se cargó en un intento previo)
-  const predKey = `${m.homeName}|${m.awayName}|${m.rawDate || ''}`;
-  const resultKey = `result|${m.homeName}|${m.awayName}|${m.rawDate || ''}`;
-
-  let pred = predCache[predKey];
-  let result = m.sh !== null ? predCache[resultKey] : null;
-
-  let updated = false;
-
-  // Si no tenemos la predicción, intentamos pedirla
+  const pred = await getPrediction(m);
   if (!pred) {
-    delete predCache[predKey]; // forzar limpieza por seguridad
-    pred = await getPrediction(m);
-    if (pred) updated = true;
-  }
-
-  // Si es un partido finalizado y no tenemos el resultado real (checks)
-  if (m.sh !== null && !result) {
-    delete predCache[resultKey]; // forzar limpieza por seguridad
-    result = await getMatchResult(m);
-    if (result) updated = true;
-  }
-
-  // Si obtuvimos algo nuevo y ya tenemos como mínimo la predicción, actualizamos la tarjeta
-  if (updated && pred) {
-    const card = document.getElementById(`pred-card-${round}-${i}`);
-    if (card) {
-      card.classList.remove('pred-card-loading');
-      card.innerHTML = buildPredCardHTML(m, pred, result);
-      card.classList.add('pred-card-loaded');
-    }
-  }
-
-  // Si todavía falta algo, volvemos a programar un reintento
-  const stillNeedsPred = !pred;
-  const stillNeedsResult = m.sh !== null && !result;
-
-  if (stillNeedsPred || stillNeedsResult) {
     retryCard(round, m, i, attempt + 1);
+    return;
+  }
+  const card = document.getElementById(`pred-card-${round}-${i}`);
+  if (card) {
+    card.classList.remove('pred-card-loading');
+    card.innerHTML = buildPredCardHTML(m, pred);
   }
 }
 
@@ -1077,9 +1028,9 @@ async function retryCard(round, m, i, attempt) {
 // Cada metrica del modelo: umbral expresado como "+x / -x" (los goles y tiros son
 // enteros, asi que ">= 2 goles" equivale a "+1.5" y ">= 5 tiros" a "+4.5").
 const PRED_METRICS = [
-  { key: 'xg',    label: 'Goles esperados', line: '1.5', realKey: 'xg',           unit: 'xG' },
-  { key: 'goles', label: 'Goles anotados',  line: '1.5', realKey: 'goles',        unit: 'goles' },
-  { key: 'tiros', label: 'Tiros a puerta',  line: '4.5', realKey: 'tiros_puerta', unit: 'tiros a puerta' },
+  { key: 'xg',    label: 'Goles esperados', line: '1.5', realKey: 'xg' },
+  { key: 'goles', label: 'Goles anotados',  line: '1.5', realKey: 'goles' },
+  { key: 'tiros', label: 'Tiros a puerta',  line: '4.5', realKey: 'tiros_puerta' },
 ];
 
 const PRED_HEADER_HTML = `
@@ -1089,19 +1040,18 @@ const PRED_HEADER_HTML = `
     ${PRED_METRICS.map(mt => `<span class="pred-head-sub grp-start">+${mt.line}</span><span class="pred-head-sub grp-end">−${mt.line}</span>`).join('')}
   </div>`;
 
-function buildPredCardHTML(m, data, result = null) {
+function buildPredCardHTML(m, data) {
   const finished = m.sh !== null;
 
   // Dos celdas por metrica: probabilidad de superar (+) y de no superar (-) el umbral.
   // La mayor de las dos (la prediccion del modelo) va resaltada en verde.
-  function cells(teamPred, teamReal) {
+  function cells(teamPred) {
     return PRED_METRICS.map(mt => {
       const p = Number(teamPred[mt.key].probabilidad);
       const over = teamPred[mt.key].alto;  // decision del modelo (un 50.0% redondeado puede ser clase 0)
-      const realTxt = teamReal ? `Real: ${teamReal[mt.realKey]} ${mt.unit}` : 'Partido aún no jugado';
       return `
-        <span class="pred-cell grp-start ${over ? 'is-high' : ''}" title="${realTxt}">${p.toFixed(1)}%</span>
-        <span class="pred-cell grp-end ${over ? '' : 'is-high'}" title="${realTxt}">${(100 - p).toFixed(1)}%</span>`;
+        <span class="pred-cell grp-start ${over ? 'is-high' : ''}">${p.toFixed(1)}%</span>
+        <span class="pred-cell grp-end ${over ? '' : 'is-high'}">${(100 - p).toFixed(1)}%</span>`;
     }).join('');
   }
 
@@ -1117,9 +1067,9 @@ function buildPredCardHTML(m, data, result = null) {
       <span class="pred-status">${finished ? 'Finalizado' : (m.hour && m.hour !== 'FT' ? m.hour : '')}</span>
     </div>
     ${teamCell(m.homeId, m.homeName)}
-    ${cells(data.local, result && result.local)}
+    ${cells(data.local)}
     ${teamCell(m.awayId, m.awayName)}
-    ${cells(data.visitante, result && result.visitante)}`;
+    ${cells(data.visitante)}`;
 }
 
 // ── ESTADÍSTICAS TAB ──────────────────────────────────────────────────────
