@@ -1036,9 +1036,9 @@ async function retryCard(round, m, i, attempt) {
 // Cada metrica del modelo: umbral expresado como "+x / -x" (los goles y tiros son
 // enteros, asi que ">= 2 goles" equivale a "+1.5" y ">= 5 tiros" a "+4.5").
 const PRED_METRICS = [
-  { key: 'xg',    label: 'Goles esperados', line: '1.5', realKey: 'xg',           cumpleKey: 'cumple_xg',    unit: 'xG' },
-  { key: 'goles', label: 'Goles anotados',  line: '1.5', realKey: 'goles',        cumpleKey: 'cumple_goles', unit: 'goles' },
-  { key: 'tiros', label: 'Tiros a puerta',  line: '4.5', realKey: 'tiros_puerta', cumpleKey: 'cumple_tiros', unit: 'tiros a puerta' },
+  { key: 'xg',    label: 'Goles esperados', line: '1.5', realKey: 'xg',           unit: 'xG' },
+  { key: 'goles', label: 'Goles anotados',  line: '1.5', realKey: 'goles',        unit: 'goles' },
+  { key: 'tiros', label: 'Tiros a puerta',  line: '4.5', realKey: 'tiros_puerta', unit: 'tiros a puerta' },
 ];
 
 const PRED_HEADER_HTML = `
@@ -1060,14 +1060,9 @@ function buildPredCardHTML(m, data, result = null) {
       const p = Number(teamPred[mt.key].probabilidad);
       const over = p >= 50;
       const realTxt = teamReal ? `Real: ${teamReal[mt.realKey]} ${mt.unit}` : 'Partido aún no jugado';
-      let check = '';
-      if (teamReal && teamReal[mt.cumpleKey] !== undefined && teamReal[mt.cumpleKey] !== null) {
-        const ok = over === teamReal[mt.cumpleKey];
-        check = `<span class="pred-check ${ok ? 'ok' : 'fail'}">${ok ? '✓' : '✗'}</span>`;
-      }
       return `
-        <span class="pred-cell grp-start ${over ? 'is-high' : ''}" title="${realTxt}">${p.toFixed(1)}%${over ? check : ''}</span>
-        <span class="pred-cell grp-end ${over ? '' : 'is-high'}" title="${realTxt}">${(100 - p).toFixed(1)}%${over ? '' : check}</span>`;
+        <span class="pred-cell grp-start ${over ? 'is-high' : ''}" title="${realTxt}">${p.toFixed(1)}%</span>
+        <span class="pred-cell grp-end ${over ? '' : 'is-high'}" title="${realTxt}">${(100 - p).toFixed(1)}%</span>`;
     }).join('');
   }
 
@@ -1083,10 +1078,8 @@ function buildPredCardHTML(m, data, result = null) {
       <span class="pred-status">${finished ? 'Finalizado' : (m.hour && m.hour !== 'FT' ? m.hour : '')}</span>
     </div>
     ${teamCell(m.homeId, m.homeName, homeWin)}
-    <span class="pred-score ${homeWin ? 'winner' : ''}">${finished ? m.sh : ''}</span>
     ${cells(data.local, result && result.local)}
     ${teamCell(m.awayId, m.awayName, awayWin)}
-    <span class="pred-score ${awayWin ? 'winner' : ''}">${finished ? m.sa : ''}</span>
     ${cells(data.visitante, result && result.visitante)}`;
 }
 

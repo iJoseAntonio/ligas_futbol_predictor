@@ -808,9 +808,8 @@ img { display: block; }
 .pred-table {
   /* Las 6 columnas de probabilidad (66px c/u) quedan pegadas al borde derecho:
      los separadores de grupo se dibujan con el fondo, a 132/264/396px del borde */
-  --pred-cols: 64px minmax(140px, 1fr) 30px repeat(6, 66px);
+  --pred-cols: 64px minmax(140px, 1fr) repeat(6, 66px);
   --grp-line: var(--border);
-  --grp-shade: rgba(255, 255, 255, 0.03);
   display: flex;
   flex-direction: column;
   min-width: 640px;
@@ -820,10 +819,9 @@ img { display: block; }
   background-image:
     linear-gradient(var(--grp-line), var(--grp-line)),
     linear-gradient(var(--grp-line), var(--grp-line)),
-    linear-gradient(var(--grp-line), var(--grp-line)),
-    linear-gradient(var(--grp-shade), var(--grp-shade));
-  background-position: right 132px top, right 264px top, right 396px top, right 132px top;
-  background-size: 1px 100%, 1px 100%, 1px 100%, 132px 100%;
+    linear-gradient(var(--grp-line), var(--grp-line));
+  background-position: right 132px top, right 264px top, right 396px top;
+  background-size: 1px 100%, 1px 100%, 1px 100%;
   background-repeat: no-repeat;
 }
 .pred-head {
@@ -839,7 +837,7 @@ img { display: block; }
   color: var(--text2);
 }
 .pred-head-match {
-  grid-column: 1 / 4;
+  grid-column: 1 / 3;
   grid-row: 1 / 3;
   align-self: center;
   padding-left: 12px;
@@ -904,15 +902,6 @@ img { display: block; }
 .pred-team-cell span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pred-team-cell .winner { font-weight: 700; }
 
-.pred-score {
-  align-self: center;
-  text-align: center;
-  font-size: 13px;
-  font-family: 'DM Mono', monospace;
-  color: var(--text2);
-}
-.pred-score.winner { color: rgb(236, 237, 239); font-weight: 700; }
-
 .pred-cell {
   display: flex;
   align-items: center;
@@ -934,9 +923,6 @@ img { display: block; }
   color: rgb(236, 237, 239);
   font-weight: 600;
 }
-.pred-check { font-size: 11px; font-family: 'DM Sans', sans-serif; }
-.pred-check.ok   { color: rgb(70, 194, 82); }
-.pred-check.fail { color: #e24b4a; }
 
 /* ── ESTADÍSTICAS TAB ────────────────────────────────────────────────────── */
 .stats-tab-wrap {
