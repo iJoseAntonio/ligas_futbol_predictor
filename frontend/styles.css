@@ -718,7 +718,7 @@ img { display: block; }
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text);
 }
 .leg-item[hidden] { display: none; }
@@ -733,11 +733,11 @@ img { display: block; }
   flex-wrap: wrap;
   gap: 4px 14px;
   padding: 6px 14px 10px;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text);
   border-top: 1px solid var(--border);
 }
-.col-legend b { color: var(--text3); margin-right: 2px; }
+.col-legend b { color: var(--text2); margin-right: 2px; }
 
 /* ── LOADING / ERROR STATES ────────────────────────────────────────────── */
 .loading-state {
