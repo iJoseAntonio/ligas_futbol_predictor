@@ -1198,6 +1198,29 @@ async function renderEstadisticasTab() {
 let _radarChart = null;
 let _shapChart  = null;
 
+// Chart.js no lee el CSS: toma los colores del tema activo desde las variables.
+function chartTheme() {
+  const css = getComputedStyle(document.documentElement);
+  const v = name => css.getPropertyValue(name).trim();
+  return { text: v('--text'), text2: v('--text2'), grid: v('--chart-grid'), axis: v('--chart-axis'), accent: v('--accent') };
+}
+
+function applyChartTheme() {
+  const t = chartTheme();
+  if (_radarChart) {
+    const r = _radarChart.options.scales.r;
+    r.ticks.color = t.text2; r.grid.color = t.grid; r.angleLines.color = t.grid; r.pointLabels.color = t.text;
+    _radarChart.update('none');
+  }
+  if (_shapChart) {
+    const { x, y } = _shapChart.options.scales;
+    x.grid.color = t.grid; x.ticks.color = t.text; x.border.color = t.axis;
+    y.ticks.color = t.text; y.border.color = t.axis;
+    _shapChart.data.datasets[0].backgroundColor = t.accent;
+    _shapChart.update('none');
+  }
+}
+
 const MODEL_COLORS = {
   'XGBoost':             '#a78bfa',
   'LightGBM':            '#38bdf8',
@@ -1232,6 +1255,7 @@ function renderCompChart(varKey, metricsData) {
     };
   });
 
+  const theme = chartTheme();
   _radarChart = new Chart(canvas.getContext('2d'), {
     type: 'radar',
     data: { labels, datasets },
@@ -1244,13 +1268,13 @@ function renderCompChart(varKey, metricsData) {
           max: 1,
           ticks: {
             stepSize: 0.2,
-            color: '#ccc',
+            color: theme.text2,
             font: { size: 9 },
             backdropColor: 'transparent',
           },
-          grid:        { color: 'rgba(255,255,255,0.15)' },
-          angleLines:  { color: 'rgba(255,255,255,0.15)' },
-          pointLabels: { color: '#e0e0e0', font: { size: 11 } },
+          grid:        { color: theme.grid },
+          angleLines:  { color: theme.grid },
+          pointLabels: { color: theme.text, font: { size: 11 } },
         },
       },
       plugins: {
@@ -1359,13 +1383,14 @@ function renderShapChart(target, shapData) {
   const labels = sorted.map(d => formatShapVar(d.variable));
   const values = sorted.map(d => d.importancia);
 
+  const theme = chartTheme();
   _shapChart = new Chart(canvas, {
     type: 'bar',
     data: {
       labels,
       datasets: [{
         data: values,
-        backgroundColor: 'rgba(108,99,255,0.78)', // var(--accent) — color de marca del sitio
+        backgroundColor: theme.accent,
         borderRadius: 4,
         borderSkipped: false,
       }]
@@ -1382,14 +1407,14 @@ function renderShapChart(target, shapData) {
       },
       scales: {
         x: {
-          grid: { color: 'rgba(255,255,255,0.1)' },
-          ticks: { color: '#f0f0f0', font: { size: 10 }, maxTicksLimit: 6 },
-          border: { color: 'rgba(255,255,255,0.3)' },
+          grid: { color: theme.grid },
+          ticks: { color: theme.text, font: { size: 10 }, maxTicksLimit: 6 },
+          border: { color: theme.axis },
         },
         y: {
           grid: { display: false },
-          ticks: { color: '#f0f0f0', font: { size: 11 }, autoSkip: false },
-          border: { color: 'rgba(255,255,255,0.3)' },
+          ticks: { color: theme.text, font: { size: 11 }, autoSkip: false },
+          border: { color: theme.axis },
         }
       }
     }
@@ -1756,8 +1781,28 @@ function setupRoundNav() {
   });
 }
 
+// ── TEMA CLARO / OSCURO ────────────────────────────────────────────────────
+function setupThemeToggle() {
+  const btn = document.getElementById('theme-toggle');
+  if (!btn) return;
+  const label = () => document.documentElement.getAttribute('data-theme') === 'light'
+    ? 'Cambiar a tema oscuro' : 'Cambiar a tema claro';
+  btn.title = label();
+  btn.setAttribute('aria-label', label());
+
+  btn.addEventListener('click', () => {
+    const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('theme', next); } catch (_) { /* modo privado: solo dura esta visita */ }
+    btn.title = label();
+    btn.setAttribute('aria-label', label());
+    applyChartTheme();
+  });
+}
+
 // ── INIT ──────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+  setupThemeToggle();
   setupMainTabs();
   setupSubTabs();
   setupClasDropdown();

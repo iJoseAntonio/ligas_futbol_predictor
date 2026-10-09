@@ -19,6 +19,44 @@
   --gray:      #555;
   --radius:    10px;
   --header-h:  126px;
+
+  color-scheme: dark;
+  --text-strong: #ECEDEF;              /* texto principal resaltado */
+  --home:        #46C252;              /* equipo local */
+  --home-soft:   var(--home-soft);
+  --away:        #7A84FF;              /* equipo visitante */
+  --track:       rgba(255, 255, 255, 0.12);
+  --hover:       rgba(255, 255, 255, 0.05);
+  --tooltip-bg:  #3a3b40;
+  --shadow:      rgba(0, 0, 0, 0.45);
+  --chart-grid:  rgba(255, 255, 255, 0.12);
+  --chart-axis:  rgba(255, 255, 255, 0.3);
+}
+
+/* Tema claro (valores del tema claro de Sofascore). Un solo color de texto con
+   distintas opacidades: 100% principal, 70% secundario, 45% tenue, 15% bordes. */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg:          #EDF1F6;
+  --surface:     #FFFFFF;
+  --surface2:    #F4F6F9;
+  --surface3:    #E8ECF3;
+  --border:      rgba(34, 34, 38, 0.15);
+  --text:        #222226;
+  --text2:       rgba(34, 34, 38, 0.7);
+  --text3:       rgba(34, 34, 38, 0.45);
+  --gray:        #A4A9B3;
+  --accent:      #4F46E5;
+  --text-strong: #222226;
+  --home:        #0BB32A;
+  --home-soft:   rgba(11, 179, 42, 0.15);
+  --away:        #374DF5;
+  --track:       rgba(34, 34, 38, 0.1);
+  --hover:       rgba(34, 34, 38, 0.05);
+  --tooltip-bg:  #FFFFFF;
+  --shadow:      rgba(34, 34, 38, 0.18);
+  --chart-grid:  rgba(34, 34, 38, 0.1);
+  --chart-axis:  rgba(34, 34, 38, 0.3);
 }
 
 body {
@@ -508,7 +546,7 @@ img { display: block; }
   border: 1px solid var(--border);
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 12px var(--shadow);
   z-index: 20;
 }
 .clas-menu[hidden] { display: none; }
@@ -525,7 +563,7 @@ img { display: block; }
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
-.clas-menu-item:hover { background: var(--surface4, rgba(255,255,255,0.05)); color: var(--text); }
+.clas-menu-item:hover { background: var(--hover); color: var(--text); }
 .clas-menu-item.active { color: var(--accent); }
 
 .sub-tabs {
@@ -847,7 +885,7 @@ img { display: block; }
   padding: 8px 4px 2px;
   text-align: center;
   font-weight: 500;
-  color: rgb(236, 237, 239);
+  color: var(--text-strong);
 }
 .pred-head-sub {
   padding: 2px 0 7px;
@@ -885,7 +923,7 @@ img { display: block; }
   justify-content: center;
   gap: 2px;
   font-size: 11px;
-  color: rgb(236, 237, 239);
+  color: var(--text-strong);
 }
 .pred-status { font-size: 10px; color: var(--text2); }
 
@@ -896,7 +934,7 @@ img { display: block; }
   min-width: 0;
   padding: 0 8px;
   font-size: 12px;
-  color: rgb(236, 237, 239);
+  color: var(--text-strong);
 }
 .pred-team-cell img { width: 20px; height: 20px; object-fit: contain; flex-shrink: 0; }
 .pred-team-cell span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -919,8 +957,8 @@ img { display: block; }
 .pred-cell.grp-end   { margin: 0 8px 0 2px; }
 /* La mayor probabilidad del par = la opcion que elige el modelo */
 .pred-cell.is-high {
-  background: rgba(70, 194, 82, 0.18);
-  color: rgb(236, 237, 239);
+  background: var(--home-soft);
+  color: var(--text-strong);
   font-weight: 600;
 }
 
@@ -1031,14 +1069,14 @@ img { display: block; }
   font-size: 12px;
   font-weight: 400;
   font-family: 'DM Mono', monospace;
-  color: rgb(236, 237, 239);
+  color: var(--text-strong);
 }
 
 .stats-sort-th {
   cursor: pointer;
   user-select: none;
 }
-.stats-sort-th:hover { color: rgb(236, 237, 239); }
+.stats-sort-th:hover { color: var(--text-strong); }
 .sort-tri {
   position: absolute;
   bottom: 2px;
@@ -1471,7 +1509,7 @@ img { display: block; }
   gap: 8px;
   font-size: 13px;
   font-weight: 500;
-  color: rgb(236, 237, 239);
+  color: var(--text-strong);
   cursor: default;
 }
 .match-context-flag { width: 18px; height: 18px; border-radius: 50%; object-fit: cover; }
@@ -1486,7 +1524,7 @@ img { display: block; }
   border-radius: 50%;
   background: var(--surface3);
   border: 1px solid var(--border);
-  color: rgb(236, 237, 239);
+  color: var(--text-strong);
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
 }
@@ -1527,9 +1565,9 @@ img { display: block; }
   gap: 4px;
   flex-shrink: 0;
 }
-.match-modal-date   { font-size: 11px; color: rgb(236, 237, 239); }
-.match-modal-score  { font-size: 28px; font-weight: 700; color: rgb(236, 237, 239); font-family: 'DM Mono', monospace; }
-.match-modal-status { font-size: 11px; font-weight: 600; color: rgb(236, 237, 239); }
+.match-modal-date   { font-size: 11px; color: var(--text-strong); }
+.match-modal-score  { font-size: 28px; font-weight: 700; color: var(--text-strong); font-family: 'DM Mono', monospace; }
+.match-modal-status { font-size: 11px; font-weight: 600; color: var(--text-strong); }
 
 .match-pitch-full {
   padding: 20px 24px 8px;
@@ -1562,7 +1600,7 @@ img { display: block; }
 .stat-group-title {
   font-size: 12px;
   font-weight: 700;
-  color: rgb(236, 237, 239);
+  color: var(--text-strong);
   text-align: center;
   margin-bottom: 12px;
   padding-bottom: 6px;
@@ -1578,14 +1616,14 @@ img { display: block; }
 .stat-val {
   font-size: 13px;
   font-weight: 600;
-  color: rgb(236, 237, 239);
+  color: var(--text-strong);
   flex: 0 0 48px;
 }
 .stat-val-home { text-align: left; }
 .stat-val-away { text-align: right; }
 .stat-label {
   font-size: 12px;
-  color: rgb(236, 237, 239);
+  color: var(--text-strong);
   text-align: center;
   flex: 1;
 }
@@ -1594,12 +1632,12 @@ img { display: block; }
   display: inline-flex;
   vertical-align: middle;
   margin-left: 4px;
-  color: rgb(122, 132, 255);
+  color: var(--away);
   cursor: help;
   outline: none;
 }
 .stat-info svg { width: 16px; height: 16px; }
-.stat-info:focus-visible svg { outline: 2px solid rgb(122, 132, 255); outline-offset: 2px; border-radius: 50%; }
+.stat-info:focus-visible svg { outline: 2px solid var(--away); outline-offset: 2px; border-radius: 50%; }
 .stat-info-tip {
   position: absolute;
   top: calc(100% + 8px);
@@ -1611,9 +1649,10 @@ img { display: block; }
   flex-direction: column;
   gap: 10px;
   border-radius: 8px;
-  background: #3a3b40;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
-  color: rgb(236, 237, 239);
+  background: var(--tooltip-bg);
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 24px var(--shadow);
+  color: var(--text-strong);
   font-size: 12px;
   font-weight: 400;
   line-height: 1.45;
@@ -1655,16 +1694,16 @@ img { display: block; }
 /* El visitante se llena en sentido antihorario, como en Sofascore */
 .stat-donut-away svg { transform: rotate(-90deg) scaleY(-1); }
 .stat-donut circle { fill: none; stroke-width: 5; }
-.stat-donut-track { stroke: rgba(255, 255, 255, 0.12); }
-.stat-donut-home .stat-donut-fill { stroke: rgb(70, 194, 82); }
-.stat-donut-away .stat-donut-fill { stroke: rgb(122, 132, 255); }
+.stat-donut-track { stroke: var(--track); }
+.stat-donut-home .stat-donut-fill { stroke: var(--home); }
+.stat-donut-away .stat-donut-fill { stroke: var(--away); }
 .stat-donut-pct {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   font-size: 12px;
-  color: rgb(236, 237, 239);
+  color: var(--text-strong);
 }
 
 .stat-bars {
@@ -1681,8 +1720,8 @@ img { display: block; }
   display: flex;
 }
 .stat-bar-home { justify-content: flex-end; }
-.stat-bar-fill { height: 100%; background: rgb(70, 194, 82); border-radius: 3px; }
-.stat-bar-away .stat-bar-fill { background: rgb(122, 132, 255); }
+.stat-bar-fill { height: 100%; background: var(--home); border-radius: 3px; }
+.stat-bar-away .stat-bar-fill { background: var(--away); }
 
 /* ── CANCHA DE ALINEACIONES (horizontal, estilo Sofascore) ────────────── */
 .pitch-wrap {
@@ -1703,13 +1742,13 @@ img { display: block; }
 .match-section-title {
   font-size: 14px;
   font-weight: 600;
-  color: rgb(236, 237, 239);
+  color: var(--text-strong);
   text-align: center;
 }
 .pitch-formation-label {
   font-size: 12px;
   font-weight: 600;
-  color: rgb(236, 237, 239);
+  color: var(--text-strong);
   letter-spacing: 0.3px;
 }
 .pitch {
@@ -1829,3 +1868,30 @@ img { display: block; }
   color: #a4a9b3;
   margin-right: 3px;
 }
+
+/* ── BOTON DE TEMA (claro / oscuro) ───────────────────────────────────── */
+.header { position: relative; }
+.theme-toggle {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.theme-toggle:hover { background: var(--surface3); border-color: var(--accent); }
+.theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.theme-toggle svg { width: 18px; height: 18px; }
+/* Se muestra el icono del tema al que se cambiaria */
+.theme-toggle .icon-moon { display: none; }
+:root[data-theme="light"] .theme-toggle .icon-sun  { display: none; }
+:root[data-theme="light"] .theme-toggle .icon-moon { display: block; }
