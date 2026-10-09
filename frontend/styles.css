@@ -1147,7 +1147,7 @@ img { display: block; }
 
 .acc-card-sub {
   font-size: 11px;
-  color: var(--text2);
+  color: var(--text-strong);
 }
 .acc-card-count {
   font-size: 11px;
@@ -1180,7 +1180,7 @@ img { display: block; }
 
 .rend-table-head {
   display: grid;
-  grid-template-columns: 92px 80px 32px 1fr 1fr 1fr;
+  grid-template-columns: 92px 80px 56px 1fr 1fr 1fr;
   gap: 8px;
   padding: 6px 8px;
   font-size: 12px;
@@ -1195,7 +1195,7 @@ img { display: block; }
 
 .rend-table-row {
   display: grid;
-  grid-template-columns: 92px 80px 32px 1fr 1fr 1fr;
+  grid-template-columns: 92px 80px 56px 1fr 1fr 1fr;
   gap: 8px;
   padding: 10px 8px;
   align-items: center;
@@ -1240,10 +1240,12 @@ img { display: block; }
   padding: 3px 8px;
   border-radius: 6px;
   width: fit-content;
+  color: var(--text);
 }
-.acc-badge.acc-green  { background: rgba(21, 177, 104, 0.15); color: var(--green); }
-.acc-badge.acc-yellow { background: rgba(240, 165, 0, 0.15);  color: var(--yellow); }
-.acc-badge.acc-red    { background: rgba(226, 75, 74, 0.12);  color: var(--red); }
+/* El numero va del color de la fila; el recuadro lleva el color del semaforo */
+.acc-badge.acc-green  { background: rgba(21, 177, 104, 0.28); color: var(--text); }
+.acc-badge.acc-yellow { background: rgba(240, 165, 0, 0.28);  color: var(--text); }
+.acc-badge.acc-red    { background: rgba(226, 75, 74, 0.28);  color: var(--text); }
 
 /* ── RENDIMIENTO SUB-TABS ────────────────────────────────────────────────── */
 .rend-sub-nav {

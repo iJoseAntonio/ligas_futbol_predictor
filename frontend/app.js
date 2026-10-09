@@ -1488,7 +1488,7 @@ async function renderRendimientoTab() {
             <span class="acc-card-count">Acertó ${hits(mt.key)} de ${totalPred} predicciones</span>
           </div>`).join('')}
         </div>
-        <div class="rend-meta">${resumen.total_rondas} rondas evaluadas · ${totalPred} predicciones por métrica (9 partidos × 2 equipos por ronda)</div>
+        <div class="rend-meta">${resumen.total_rondas} rondas evaluadas · ${totalPred} predicciones por métrica</div>
         <div class="rend-table-wrap">
           <div class="rend-table-head">
             <span>Ronda</span>
