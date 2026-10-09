@@ -143,17 +143,8 @@ img { display: block; }
 }
 
 .flag { width: 22px; height: 16px; border-radius: 3px; object-fit: cover; }
-.country { font-size: 14px; color: var(--text2); font-weight: 500; }
-
-.season-label {
-  background: var(--surface3);
-  border: 1px solid var(--border);
-  color: var(--text2);
-  font-size: 12px;
-  font-weight: 600;
-  padding: 3px 10px;
-  border-radius: 6px;
-}
+.country,
+.season-label { font-size: 12px; color: var(--text-strong); font-weight: 500; }
 
 .progress-wrap { margin-top: 8px;padding-right: 30px; }
 
@@ -168,6 +159,7 @@ img { display: block; }
   height: 100%;
   width: 40%;
   background: var(--text-strong);
+  opacity: 0.8;                       /* un poco menos intenso que el texto */
   border-radius: 3px;
   transition: width 0.8s ease;
 }
