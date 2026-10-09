@@ -273,7 +273,7 @@ function renderStandings(data) {
     const formaHtml = forma.split('').map(formBox).join('');
 
     html += `
-    <div class="team-row ${rowClass}" style="animation-delay:${i * 0.03}s">
+    <div class="team-row ${rowClass}">
       <span class="zone-indicator"></span>
       <div class="pos-circle ${circleClass}">${pos}</div>
       <div class="team-cell">
@@ -325,7 +325,7 @@ function renderMatches(round) {
       : `<div style="min-width:16px"></div>`;
 
     html += `
-    <div class="match-row ${finished ? 'match-row-clickable' : ''}" style="animation-delay:${i * 0.04}s"
+    <div class="match-row ${finished ? 'match-row-clickable' : ''}"
          ${finished ? `data-match-idx="${i}" role="button" tabindex="0"` : ''}>
       <div class="match-time-cell">
         ${dateHtml}
@@ -950,7 +950,7 @@ async function renderPredictionsTab(round) {
                 <span>${m.homeName} vs ${m.awayName}</span>
               </div>`;
     }
-    return `<div class="pred-card" id="pred-card-${round}-${i}" style="animation-delay:${i * 0.05}s">
+    return `<div class="pred-card" id="pred-card-${round}-${i}">
               ${buildPredCardHTML(m, pred, results[i])}
             </div>`;
   }).join('');
@@ -1016,7 +1016,6 @@ async function retryCard(round, m, i, attempt) {
   if (updated && pred) {
     const card = document.getElementById(`pred-card-${round}-${i}`);
     if (card) {
-      card.style.animationDelay = '0s';
       card.classList.remove('pred-card-loading');
       card.innerHTML = buildPredCardHTML(m, pred, result);
       card.classList.add('pred-card-loaded');
@@ -1124,7 +1123,7 @@ function renderStatsTable() {
     ).join('');
 
     html += `
-      <div class="stats-row" style="animation-delay:${i * 0.03}s">
+      <div class="stats-row">
         <span class="stats-rank">${i + 1}</span>
         <div class="stats-team-cell">
           ${logo ? `<img src="${logo}" alt="${team.equipo}" onerror="this.style.opacity=0.15">` : '<div style="width:22px;flex-shrink:0"></div>'}
@@ -1497,7 +1496,7 @@ async function renderRendimientoTab() {
             ${REND_METRICS.map(mt => `<span>${mt.label}</span>`).join('')}
           </div>
           ${rounds.map((r, i) => `
-            <div class="rend-table-row" style="animation-delay:${i * 0.05}s">
+            <div class="rend-table-row">
               <span class="rend-jornada">${r.jornada}</span>
               <span class="rend-fecha">${r.fecha}</span>
               <span class="rend-n">${r.total}</span>
