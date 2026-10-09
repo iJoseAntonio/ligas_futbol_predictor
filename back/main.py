@@ -417,7 +417,7 @@ def health(request: Request):
 
 
 @app.get("/predict-match")
-@limiter.limit("30/minute")
+@limiter.limit("120/minute")
 def predict_match(
     request: Request,
     home: str = Query(..., description="Nombre del equipo local"),
@@ -460,7 +460,7 @@ def predict_match(
 
 
 @app.get("/match-result")
-@limiter.limit("60/minute")
+@limiter.limit("120/minute")
 def match_result(
     request: Request,
     home: str = Query(..., description="Equipo local"),

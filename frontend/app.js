@@ -1083,7 +1083,7 @@ function buildPredCardHTML(m, data, result = null) {
   function cells(teamPred, teamReal) {
     return PRED_METRICS.map(mt => {
       const p = Number(teamPred[mt.key].probabilidad);
-      const over = p >= 50;
+      const over = teamPred[mt.key].alto;  // decision del modelo (un 50.0% redondeado puede ser clase 0)
       const realTxt = teamReal ? `Real: ${teamReal[mt.realKey]} ${mt.unit}` : 'Partido aún no jugado';
       return `
         <span class="pred-cell grp-start ${over ? 'is-high' : ''}" title="${realTxt}">${p.toFixed(1)}%</span>
@@ -1450,6 +1450,87 @@ function renderShapChart(target, shapData) {
   if (btn) btn.textContent = _shapAsc ? '↑ Asc' : '↓ Desc';
 }
 
+// ── RENDIMIENTO: detalle de una ronda (acordeon) ──────────────────────────
+async function toggleRoundDetail(row) {
+  const wasOpen = row.classList.contains('is-open');
+  document.querySelectorAll('.rend-detail').forEach(d => d.remove());
+  document.querySelectorAll('.rend-table-row.is-open').forEach(r => {
+    r.classList.remove('is-open');
+    r.setAttribute('aria-expanded', 'false');
+  });
+  if (wasOpen) return;
+
+  row.classList.add('is-open');
+  row.setAttribute('aria-expanded', 'true');
+  const panel = document.createElement('div');
+  panel.className = 'rend-detail';
+  panel.innerHTML = `<div class="loading-state" style="padding:16px 0"><div class="spinner"></div><span>Cargando partidos…</span></div>`;
+  row.after(panel);
+
+  const jornada = row.dataset.jornada;
+  const round = Object.keys(ROUND_META).map(Number)
+    .find(r => `${ROUND_META[r].stage} ${ROUND_META[r].displayNum}` === jornada);
+  const matches = (MATCHES[round] || []).filter(m => m.sh !== null);
+  if (!matches.length) {
+    panel.innerHTML = '<div class="rd-empty">Sin partidos jugados en esta ronda</div>';
+    return;
+  }
+
+  const [preds, results] = await Promise.all([
+    Promise.all(matches.map(getPrediction)),
+    Promise.all(matches.map(getMatchResult)),
+  ]);
+  if (!panel.isConnected) return; // el usuario ya cerro o abrio otra ronda
+  panel.innerHTML = buildRoundDetailHtml(matches, preds, results);
+}
+
+function buildRoundDetailHtml(matches, preds, results) {
+  const hits = Object.fromEntries(PRED_METRICS.map(mt => [mt.key, 0]));
+  let total = 0;
+
+  const teamLine = (id, name, teamPred, teamReal) => {
+    total++;
+    const cells = PRED_METRICS.map(mt => {
+      const p = Number(teamPred[mt.key].probabilidad);
+      const over = teamPred[mt.key].alto;  // decision del modelo (un 50.0% redondeado puede ser clase 0)
+      const ok = over === teamReal[`cumple_${mt.key}`];
+      if (ok) hits[mt.key]++;
+      return `
+        <span class="rd-cell ${ok ? 'ok' : 'fail'}" title="${ok ? 'Acertó' : 'Falló'}">
+          <span class="rd-mark">${ok ? '✓' : '✗'}</span>
+          <span>${over ? '+' : '−'}${mt.line} · ${(over ? p : 100 - p).toFixed(1)}%</span>
+          <span class="rd-real">Real ${teamReal[mt.realKey]}</span>
+        </span>`;
+    }).join('');
+    return `
+      <div class="rd-line">
+        <span class="rd-team">
+          <img src="https://img.sofascore.com/api/v1/team/${id}/image" alt="" onerror="this.style.opacity=0.15">
+          <span>${name}</span>
+        </span>
+        ${cells}
+      </div>`;
+  };
+
+  const rows = matches.map((m, i) => {
+    const pred = preds[i], res = results[i];
+    if (!pred || !res) {
+      return `<div class="rd-match"><div class="rd-line"><span class="rd-team"><span>${m.homeName} vs ${m.awayName}</span></span><span class="rd-empty-cell">Sin datos del modelo</span></div></div>`;
+    }
+    return `<div class="rd-match">
+      ${teamLine(m.homeId, m.homeName, pred.local, res.local)}
+      ${teamLine(m.awayId, m.awayName, pred.visitante, res.visitante)}
+    </div>`;
+  }).join('');
+
+  const summary = `
+    <div class="rd-line rd-summary">
+      <span class="rd-team"><span>Aciertos de la ronda</span></span>
+      ${PRED_METRICS.map(mt => `<span class="rd-sum">${hits[mt.key]} de ${total}</span>`).join('')}
+    </div>`;
+  return summary + rows;
+}
+
 // ── RENDIMIENTO TAB ────────────────────────────────────────────────────────
 async function renderRendimientoTab() {
   const tabEl = document.getElementById('tab-rendimiento');
@@ -1524,8 +1605,8 @@ async function renderRendimientoTab() {
             ${REND_METRICS.map(mt => `<span>${mt.label}</span>`).join('')}
           </div>
           ${rounds.map((r, i) => `
-            <div class="rend-table-row">
-              <span class="rend-jornada">${r.jornada}</span>
+            <div class="rend-table-row" role="button" tabindex="0" aria-expanded="false" data-jornada="${r.jornada}">
+              <span class="rend-jornada"><span class="rend-chevron" aria-hidden="true">›</span>${r.jornada}</span>
               <span class="rend-fecha">${r.fecha}</span>
               <span class="rend-n">${r.total}</span>
               ${REND_METRICS.map(mt => `<span class="acc-badge ${accColor(r[`${mt.key}_pct`])}">${r[`${mt.key}_pct`]}%</span>`).join('')}
@@ -1597,6 +1678,16 @@ async function renderRendimientoTab() {
       <div id="rend-section-backtesting" class="rend-section">${backHtml}</div>
       <div id="rend-section-comp"        class="rend-section comp-section" style="display:none">${compHtml}</div>
       <div id="rend-section-shap"        class="rend-section comp-section" style="display:none">${shapHtml}</div>`;
+
+    // Acordeon: clic en una ronda para ver que acerto y que fallo el modelo
+    content.querySelectorAll('.rend-table-row').forEach(row => {
+      row.addEventListener('click', () => toggleRoundDetail(row));
+      row.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        e.preventDefault();
+        toggleRoundDetail(row);
+      });
+    });
 
     // Sub-tab switching
     document.querySelectorAll('.rend-sub-tab').forEach(btn => {

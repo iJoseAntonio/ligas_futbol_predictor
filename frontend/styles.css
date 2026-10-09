@@ -1190,6 +1190,64 @@ img { display: block; }
   transition: background 0.15s;
 }
 .rend-table-row:hover { background: var(--surface3); }
+.rend-table-row { cursor: pointer; }
+.rend-table-row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.rend-table-row.is-open { background: var(--surface3); }
+.rend-chevron {
+  display: inline-block;
+  width: 10px;
+  margin-right: 4px;
+  font-size: 13px;
+  color: var(--text2);
+  transition: transform 0.15s;
+}
+.rend-table-row.is-open .rend-chevron { transform: rotate(90deg); }
+
+/* Detalle de la ronda: mismas columnas que la fila para alinear las metricas */
+.rend-detail {
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  padding: 4px 0 8px;
+}
+.rd-line {
+  display: grid;
+  grid-template-columns: 92px 80px 56px 1fr 1fr 1fr;
+  gap: 8px;
+  align-items: center;
+  padding: 4px 8px;
+}
+.rd-match { border-top: 1px solid var(--border); padding: 4px 0; }
+.rd-team {
+  grid-column: 1 / 4;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--text-strong);
+}
+.rd-team img { width: 18px; height: 18px; object-fit: contain; flex-shrink: 0; }
+.rd-team span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rd-summary .rd-team { color: var(--text2); }
+.rd-sum { font-size: 12px; font-weight: 600; color: var(--text-strong); }
+.rd-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: 'DM Mono', monospace;
+  color: var(--text-strong);
+}
+.rd-cell.ok   { background: rgba(21, 177, 104, 0.15); }
+.rd-cell.fail { background: rgba(226, 75, 74, 0.12); }
+.rd-mark { font-family: 'DM Sans', sans-serif; font-weight: 700; }
+.rd-cell.ok .rd-mark   { color: var(--green); }
+.rd-cell.fail .rd-mark { color: var(--red); }
+.rd-real { color: var(--text2); }
+.rd-empty, .rd-empty-cell { padding: 12px 16px; font-size: 12px; color: var(--text3); }
 
 .rend-jornada {
   font-size: 10px;
