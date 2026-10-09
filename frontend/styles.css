@@ -158,22 +158,23 @@ img { display: block; }
 .progress-wrap { margin-top: 8px;padding-right: 30px; }
 
 .progress-bar {
-  height: 3px;
+  height: 6px;
   background: var(--surface3);
-  border-radius: 2px;
+  border-radius: 3px;
   overflow: hidden;
 }
+/* Como Sofascore: relleno solido del color de texto (blanco en oscuro, casi negro en claro) */
 .progress-fill {
   height: 100%;
   width: 40%;
-  background: linear-gradient(90deg, var(--accent), #a78bfa);
-  border-radius: 2px;
+  background: var(--text-strong);
+  border-radius: 3px;
   transition: width 0.8s ease;
 }
 .progress-dates {
   display: flex;
   justify-content: space-between;
-  font-size: 10px;
+  font-size: 12px;
   color: var(--text);
   margin-top: 3px;
 }
