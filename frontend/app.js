@@ -1044,7 +1044,7 @@ const PRED_METRICS = [
 const PRED_HEADER_HTML = `
   <div class="pred-head">
     <span class="pred-head-match">Partido</span>
-    ${PRED_METRICS.map(mt => `<span class="pred-head-group">${mt.label}</span>`).join('')}
+    ${PRED_METRICS.map(mt => `<span class="pred-head-group">${mt.label}${statInfoHtml(STAT_FIELD_INFO[mt.key])}</span>`).join('')}
     ${PRED_METRICS.map(mt => `<span class="pred-head-sub grp-start">+${mt.line}</span><span class="pred-head-sub grp-end">−${mt.line}</span>`).join('')}
   </div>`;
 
