@@ -46,6 +46,10 @@ Tesis — UNMSM, Facultad de Ingeniería de Sistemas e Informática.
 │   ├── deploy-aws.yml                 ← CI/CD backend: ECR + Lambda
 │   └── deploy-frontend.yml            ← CI/CD frontend: S3 + CloudFront
 │
+├── Sofascore_Liga1_Peru.ipynb        ← Scraper de estadísticas por partido (Selenium). Agrega
+│                                        las jornadas nuevas a bd_liga1.csv. ⚠ Está en
+│                                        .gitignore (*.ipynb): solo existe en la copia local
+│
 └── notebooks/                        ← Notebooks de análisis y entrenamiento
     ├── Ingenieria_Caracteristicas_Modelos_Predictivos.ipynb
     ├── Modelo_Predictivo_Goles.ipynb
@@ -77,6 +81,45 @@ Tesis — UNMSM, Facultad de Ingeniería de Sistemas e Informática.
 > `requirements.txt` — solo se usa en este script local, no corre dentro de Lambda
 > (instálalo aparte: `pip install playwright && playwright install chromium`).
 
+## Funcionalidades del sitio
+
+| Pestaña / vista | Qué muestra |
+|---|---|
+| **Clasificaciones** | Tabla de posiciones calculada en `app.js` (Acumulado / Apertura / Clausura × Todos / Local / Visitante). Las zonas de copas y descenso solo se pintan en **Acumulado** |
+| **Estadísticas** | Promedios por partido de 2026: posesión, xG, goles, tiros totales, tiros a puerta, tiros de esquina y faltas. Filtro Todos / Local / Visitante (`/team-rankings` devuelve los 3 conjuntos en una sola respuesta) |
+| **Predicciones** | Tabla por ronda: por cada equipo, probabilidad de superar (+) o no (−) el umbral de cada modelo — Goles esperados ±1.5, Goles anotados ±1.5 (= 2 o más goles), Tiros a puerta ±4.5 (= 5 o más). En verde, la opción del modelo |
+| **Rendimiento → Aciertos por ronda** | Accuracy global y por ronda de los 3 modelos (desde el 27/04/2026, fuera del entrenamiento). Clic en una ronda → acordeón con cada predicción, el valor real y ✓/✗ |
+| **Rendimiento → Comparación de algoritmos / Importancia de variables** | Radar de métricas (XGBoost, LightGBM, Random Forest, Logistic Regression) y SHAP. Contenido técnico para la tesis, no para el usuario final |
+| **Detalle de partido** (clic en un partido jugado de la lista izquierda) | Alineaciones en cancha horizontal (`/lineups`) y estadísticas del partido (`/match-stats`), estilo Sofascore. Oculta las pestañas y muestra "‹ · Fase · Ronda N" |
+
+Otros detalles del frontend:
+- **Tema claro / oscuro** (botón sol/luna arriba a la derecha). La primera visita usa la preferencia del sistema y luego se recuerda en `localStorage`. Los colores son variables CSS en `:root` y `:root[data-theme="light"]` (valores del tema claro de Sofascore); la cancha de alineaciones queda oscura en ambos temas. Los gráficos de Chart.js leen los colores del tema activo (`chartTheme()` en `app.js`).
+- **Precarga de predicciones:** al abrir el sitio y al cambiar de ronda, las predicciones de la ronda visible se piden en segundo plano, con una cola de **máximo 4 peticiones simultáneas** y sin duplicados (`apiFetch` / `cachedApiJson` en `app.js`). Así la pestaña Predicciones abre al instante y no se supera el límite de concurrencia de Lambda (ver `README_AWS.md`, sección 6).
+- **Caché del navegador:** el sitio no envía `Cache-Control`, por lo que tras un despliegue a veces hace falta **Ctrl+Shift+R** para ver los cambios (ver pendientes en `README_AWS.md`).
+
+## Calidad de datos de Sofascore
+
+> **El scraper deja `0` cuando no encuentra una etiqueta.** `Sofascore_Liga1_Peru.ipynb`
+> busca cada estadística por su texto visible en la página. Si Sofascore la renombra, el
+> valor queda en `"0"` sin error. Ya pasó: **"Córners" pasó a "Tiros de esquina"** y 26
+> partidos (31/08 al 20/09/2026) quedaron con corners `0-0`, lo que también afectaba a
+> los modelos (`Corners_prom_3/5` son variables). El notebook ahora acepta ambas
+> etiquetas e **imprime un aviso con las estadísticas no encontradas** en cada partido:
+> revisa esa salida tras cada scraping.
+
+> **Sofascore revisa sus estadísticas días después del partido** (pases, recuperaciones,
+> tiros, xG…). Comparando con la web: Clausura 10 (scrapeada pocos días después) tenía
+> 99 estadísticas distintas en sus 9 partidos; Clausura 8 y 9, solo ajustes de centésimas
+> de xG, salvo un partido reprogramado. **Conviene scrapear cada jornada 4-5 días después
+> de jugada.**
+
+> **Cloudflare bloquea el scraping automatizado** tras muchas peticiones (403 en la API y
+> la verificación "Verifique que es un ser humano" en la página, que en Chromium de
+> Playwright queda en blanco). Para revisar o rescrapear datos puntuales funciona abrir el
+> **Google Chrome instalado** con `--remote-debugging-port=9333 --user-data-dir=<carpeta temporal>`,
+> pasar la verificación a mano y conectar Playwright con
+> `p.chromium.connect_over_cdp("http://localhost:9333")`, yendo despacio entre partidos.
+
 ---
 
 ## Arquitectura en AWS
@@ -91,7 +134,7 @@ Usuario → app.js → API Gateway → Lambda (dentro de una VPC) → RDS Postgr
 
 ## Ciclo de actualización por jornada
 
-1. Actualizar `back/data/bd_liga1.csv` y `back/data/partidos_liga1_2026.csv`.
+1. Actualizar `back/data/bd_liga1.csv` (con `Sofascore_Liga1_Peru.ipynb`, idealmente 4-5 días después de la jornada; revisar los avisos de estadísticas no encontradas) y `back/data/partidos_liga1_2026.csv`.
 2. Copiar `partidos_liga1_2026.csv` también a `frontend/` (el navegador lo lee directo).
 3. Si hay reentrenamiento: correr `notebooks/Ingenieria_Caracteristicas_Modelos_Predictivos.ipynb` (cambiando `MODELO_ACTIVO` entre `'goles'`, `'tiros'`, `'xg'`).
 4. Regenerar el rendimiento precalculado:
@@ -116,6 +159,7 @@ Usuario → app.js → API Gateway → Lambda (dentro de una VPC) → RDS Postgr
    cd back
    python migrate_to_postgres.py
    ```
+   El script pregunta el endpoint (responder `localhost`, porque el túnel lleva a RDS), el usuario maestro y la contraseña de RDS (ver `README_AWS.md`, local). Reemplaza la tabla completa (`if_exists="replace"`), así que también sube correcciones a partidos ya existentes aunque el número de filas no cambie. Al terminar, cerrar el túnel y **detener la bastion** desde la consola de EC2.
 8. Verificar: `GET /health` → `partidos_historicos` debe coincidir con las filas del CSV (sin encabezado).
 
 > **⚠ `partidos_liga1_2026.csv` está duplicado** en `back/data/` (lo usa `main.py`
