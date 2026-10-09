@@ -201,6 +201,7 @@ function loadMatchesCSV() {
       renderMatches(currentRound);
       renderDestacado(currentRound);
       if (isPredTabActive()) renderPredictionsTab(currentRound);
+      else prefetchPredictions(currentRound);
 
       computeStandings();
     },
@@ -715,36 +716,62 @@ function buildMatchBody(stats, lineups) {
 }
 
 // ── PREDICCIONES API ──────────────────────────────────────────────────────
-async function getMatchResult(m) {
-  const key = `result|${m.homeName}|${m.awayName}|${m.rawDate || ''}`;
-  if (predCache[key]) return predCache[key];
-  try {
-    const url = `${API_URL}/match-result` +
-      `?home=${encodeURIComponent(m.homeName)}` +
-      `&away=${encodeURIComponent(m.awayName)}` +
-      (m.rawDate ? `&fecha=${encodeURIComponent(m.rawDate)}` : '');
-    const res = await fetch(url);
-    if (!res.ok) return null;
-    const data = await res.json();
-    predCache[key] = data;
-    return data;
-  } catch (_) { return null; }
+// La cuenta de AWS admite pocas ejecuciones de Lambda a la vez y el exceso
+// vuelve como 503: se limita cuantas peticiones de prediccion van en paralelo.
+const API_MAX_PARALLEL = 4;
+let _apiActive = 0;
+const _apiQueue = [];
+
+function apiFetch(url) {
+  return new Promise((resolve, reject) => {
+    const run = () => {
+      _apiActive++;
+      fetch(url).then(resolve, reject).finally(() => {
+        _apiActive--;
+        if (_apiQueue.length) _apiQueue.shift()();
+      });
+    };
+    if (_apiActive < API_MAX_PARALLEL) run(); else _apiQueue.push(run);
+  });
 }
 
-async function getPrediction(m) {
+// Una sola peticion por clave: si la precarga ya la pidio, se reutiliza la misma
+const _inflight = {};
+function cachedApiJson(key, url) {
+  if (predCache[key]) return Promise.resolve(predCache[key]);
+  if (_inflight[key]) return _inflight[key];
+  const req = apiFetch(url)
+    .then(res => (res.ok ? res.json() : null))
+    .then(data => { if (data) predCache[key] = data; return data; })
+    .catch(() => null)
+    .finally(() => { delete _inflight[key]; });
+  _inflight[key] = req;
+  return req;
+}
+
+function matchQuery(m) {
+  return `?home=${encodeURIComponent(m.homeName)}` +
+    `&away=${encodeURIComponent(m.awayName)}` +
+    (m.rawDate ? `&fecha=${encodeURIComponent(m.rawDate)}` : '');
+}
+
+function getMatchResult(m) {
+  const key = `result|${m.homeName}|${m.awayName}|${m.rawDate || ''}`;
+  return cachedApiJson(key, `${API_URL}/match-result${matchQuery(m)}`);
+}
+
+function getPrediction(m) {
   const key = `${m.homeName}|${m.awayName}|${m.rawDate || ''}`;
-  if (predCache[key]) return predCache[key];
-  try {
-    const url = `${API_URL}/predict-match` +
-      `?home=${encodeURIComponent(m.homeName)}` +
-      `&away=${encodeURIComponent(m.awayName)}` +
-      (m.rawDate ? `&fecha=${encodeURIComponent(m.rawDate)}` : '');
-    const res = await fetch(url);
-    if (!res.ok) return null;
-    const data = await res.json();
-    predCache[key] = data;
-    return data;
-  } catch (_) { return null; }
+  return cachedApiJson(key, `${API_URL}/predict-match${matchQuery(m)}`);
+}
+
+// Precarga en segundo plano las predicciones de la ronda visible, para que la
+// pestana Predicciones ya tenga los datos al abrirla.
+function prefetchPredictions(round) {
+  (MATCHES[round] || []).forEach(m => {
+    getPrediction(m);
+    if (m.sh !== null) getMatchResult(m);
+  });
 }
 
 // ── ROUND SELECT ──────────────────────────────────────────────────────────
@@ -781,6 +808,7 @@ function changeRound(dir) {
   renderMatches(currentRound);
   renderDestacado(currentRound);
   if (isPredTabActive()) renderPredictionsTab(currentRound);
+  else prefetchPredictions(currentRound);
 }
 
 // ── DESTACADO ─────────────────────────────────────────────────────────────
@@ -1769,6 +1797,7 @@ function setupRoundNav() {
     renderMatches(currentRound);
     renderDestacado(currentRound);
     if (isPredTabActive()) renderPredictionsTab(currentRound);
+    else prefetchPredictions(currentRound);
   });
 }
 
