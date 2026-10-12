@@ -33,7 +33,7 @@ const TEAM_IDS = {
   'Atletico Grau':      282538,
   'Sport Huancayo':     33895,
   'ADC Juan Pablo II':  511206,
-  'CD Juan Pablo II':   511206,   // alias visto en algunos partidos scrapeados
+  'CD Juan Pablo II':   511206,
 };
 
 // Normaliza nombres inconsistentes entre CSVs
@@ -145,8 +145,14 @@ function loadMatchesCSV() {
       });
 
       // Ordenar partidos dentro de cada grupo y hallar su fecha mínima
+      // Dentro del mismo día se ordena por hora; sin hora ("No"/vacío) va primero
+      const rowTime = r => {
+        const t = (r['Hora'] || '').trim().match(/^(\d{1,2}):(\d{2})$/);
+        return t ? parseInt(t[1]) * 60 + parseInt(t[2]) : -1;
+      };
       Object.values(groups).forEach(g => {
-        g.rows.sort((a, b) => parseMatchDate(a.fecha) - parseMatchDate(b.fecha));
+        g.rows.sort((a, b) =>
+          (parseMatchDate(a.fecha) - parseMatchDate(b.fecha)) || (rowTime(a) - rowTime(b)));
         g.minDate = parseMatchDate(g.rows[0].fecha);
       });
 
