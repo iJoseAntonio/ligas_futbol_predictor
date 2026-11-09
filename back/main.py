@@ -14,6 +14,7 @@ import io
 import boto3
 from botocore.exceptions import ClientError, NoCredentialsError
 from sqlalchemy import create_engine
+from team_names import normalizar_equipo
 
 limiter = Limiter(key_func=get_remote_address)
 
@@ -268,11 +269,18 @@ def _load_date_round_map() -> tuple[dict, dict]:
 
         grupos: dict = {}  # (etapa, num) -> lista de fechas
         for _, row in df_p.iterrows():
-            jornada = str(row.get('Jornada', '')).strip()
-            m = re.match(r'^(.*?)\s+(\d+)$', jornada)
-            if not m:
-                continue
-            etapa, num = m.group(1).strip(), int(m.group(2))
+            # Formato actual: columnas fase + round; formato anterior: Jornada ("Clausura 9")
+            if 'fase' in df_p.columns and 'round' in df_p.columns:
+                etapa = str(row.get('fase', '')).strip()
+                num = pd.to_numeric(row.get('round'), errors='coerce')
+                if not etapa or pd.isna(num):
+                    continue
+                num = int(num)
+            else:
+                m = re.match(r'^(.*?)\s+(\d+)$', str(row.get('Jornada', '')).strip())
+                if not m:
+                    continue
+                etapa, num = m.group(1).strip(), int(m.group(2))
             fecha = pd.to_datetime(
                 str(row.get('fecha', '')).strip(), format='%d/%m/%Y', errors='coerce'
             )
@@ -667,8 +675,8 @@ def team_rankings(request: Request):
             df_p = pd.read_csv(partidos_path, sep=';', encoding='utf-8-sig')
             df_p.columns = df_p.columns.str.strip()
             valid_teams = (
-                set(df_p['equipo_local'].str.strip().dropna()) |
-                set(df_p['equipo_visitante'].str.strip().dropna())
+                set(df_p['equipo_local'].dropna().map(normalizar_equipo)) |
+                set(df_p['equipo_visitante'].dropna().map(normalizar_equipo))
             )
         except Exception as e:
             print(f"team-rankings: error cargando partidos CSV: {e}")

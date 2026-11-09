@@ -28,6 +28,8 @@ import time
 import pandas as pd
 from playwright.sync_api import sync_playwright
 
+from team_names import normalizar_equipo
+
 CSV_PATH = os.path.join(os.path.dirname(__file__), "data", "partidos_liga1_2026.csv")
 OUT_PATH = os.path.join(os.path.dirname(__file__), "modelos", "lineups_2026.json")
 
@@ -86,7 +88,15 @@ def scrape():
 
     # Solo partidos ya jugados (con marcador)
     jugados = df[df["goles_local"].notna() & df["goles_visitante"].notna()].copy()
-    jugados["match_id"] = jugados["url_partido"].apply(extract_match_id)
+    # match_id: columna event_id (formato actual) o, si falta, el "#id:" de url_partido
+    ids_url = jugados["url_partido"].apply(extract_match_id) if "url_partido" in jugados else None
+    if "event_id" in jugados:
+        ids = pd.to_numeric(jugados["event_id"], errors="coerce").map(lambda v: None if pd.isna(v) else str(int(v)))
+        jugados["match_id"] = ids if ids_url is None else ids.fillna(ids_url)
+    else:
+        jugados["match_id"] = ids_url
+    jugados["equipo_local"] = jugados["equipo_local"].map(normalizar_equipo)
+    jugados["equipo_visitante"] = jugados["equipo_visitante"].map(normalizar_equipo)
     jugados = jugados[jugados["match_id"].notna()]
 
     print(f"Partidos jugados con match_id: {len(jugados)} de {len(df)} totales en el fixture.")
