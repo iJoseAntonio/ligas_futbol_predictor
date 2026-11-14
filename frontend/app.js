@@ -122,6 +122,18 @@ function isEmptyScore(v) {
 let ROUND_META = {};   // globalRound -> { stage, displayNum }
 let predRenderSeq = 0; // evita que una respuesta tardía de una jornada anterior sobrescriba la actual
 
+// El CSV puede venir con columnas fase + round + hora (formato actual)
+// o con Jornada ("Clausura 9") + Hora (formato anterior)
+function rowJornada(row) {
+  const fase = (row['fase'] || '').trim();
+  const num  = (row['round'] || '').trim();
+  return fase && num ? `${fase} ${num}` : (row['Jornada'] || '').trim();
+}
+
+function rowHora(row) {
+  return (row['hora'] ?? row['Hora'] ?? '').trim();
+}
+
 function loadMatchesCSV() {
   Papa.parse(MATCHES_CSV_PATH, {
     download: true,
@@ -134,7 +146,7 @@ function loadMatchesCSV() {
       // Agrupar por etapa + número de jornada (ej. "Apertura 17", "Clausura 1")
       const groups = {};
       results.data.forEach(row => {
-        const jornada = (row['Jornada'] || '').trim();
+        const jornada = rowJornada(row);
         const m = jornada.match(/^(.*?)\s+(\d+)$/);
         if (!m) return;
         const stage = m[1].trim();
@@ -147,7 +159,7 @@ function loadMatchesCSV() {
       // Ordenar partidos dentro de cada grupo y hallar su fecha mínima
       // Dentro del mismo día se ordena por hora; sin hora ("No"/vacío) va primero
       const rowTime = r => {
-        const t = (r['Hora'] || '').trim().match(/^(\d{1,2}):(\d{2})$/);
+        const t = rowHora(r).match(/^(\d{1,2}):(\d{2})$/);
         return t ? parseInt(t[1]) * 60 + parseInt(t[2]) : -1;
       };
       Object.values(groups).forEach(g => {
@@ -174,7 +186,7 @@ function loadMatchesCSV() {
           const gv        = row['goles_visitante'];
           const hasScore  = !isEmptyScore(gl) && !isEmptyScore(gv);
 
-          const horaRaw   = (row['Hora'] || '').trim();
+          const horaRaw   = rowHora(row);
           const horaVal   = (!horaRaw || horaRaw.toLowerCase() === 'no') ? null : horaRaw;
 
           return {
