@@ -1,0 +1,55 @@
+﻿event_id,fecha,hora,fase,round,equipo_local,equipo_visitante,goles_local,goles_visitante,estado
+16281146,2026-10-27,15:00,Clausura,14,ACD Juan Pablo II,Sport Huancayo,2.0,0.0,finished
+16281147,2026-10-28,11:00,Clausura,14,Asociación Deportiva Tarma,CD Moquegua,2.0,0.0,finished
+16281145,2026-10-28,13:15,Clausura,14,FC Cajamarca,Universidad Técnica de Cajamarca,1.0,3.0,finished
+16280859,2026-10-28,15:30,Clausura,14,Alianza Atlético de Sullana,Deportivo Garcilaso,3.0,2.0,finished
+16280860,2026-10-28,19:00,Clausura,14,Cienciano,Club Atlético Grau,3.0,0.0,finished
+16280857,2026-10-29,13:00,Clausura,14,Los Chankas CYC,Cusco FC,0.0,1.0,finished
+16280858,2026-10-29,15:30,Clausura,14,Club Sporting Cristal,Alianza Lima,3.0,2.0,finished
+16280863,2026-10-29,19:30,Clausura,14,Melgar,Comerciantes Unidos,1.0,1.0,finished
+17373452,2026-11-04,20:30,Clausura,14,Universitario de Deportes,Sport Boys,,,notstarted
+16280847,2026-10-16,13:00,Clausura,12,Sport Huancayo,Cusco FC,2.0,1.0,finished
+16280843,2026-10-16,15:30,Clausura,12,Los Chankas CYC,Asociación Deportiva Tarma,2.0,1.0,finished
+16281143,2026-10-17,15:00,Clausura,12,ACD Juan Pablo II,Sport Boys,2.0,0.0,finished
+16280842,2026-10-17,18:00,Clausura,12,Melgar,Deportivo Garcilaso,4.0,2.0,finished
+16280841,2026-10-17,20:30,Clausura,12,Alianza Lima,Club Atlético Grau,3.0,1.0,finished
+16280846,2026-10-18,11:00,Clausura,12,Club Sporting Cristal,Comerciantes Unidos,4.0,2.0,finished
+16281141,2026-10-18,13:15,Clausura,12,FC Cajamarca,CD Moquegua,0.0,1.0,finished
+16280835,2026-10-18,15:30,Clausura,12,Alianza Atlético de Sullana,Universitario de Deportes,1.0,4.0,finished
+16280845,2026-10-18,18:30,Clausura,12,Cienciano,Universidad Técnica de Cajamarca,1.0,0.0,finished
+16280844,2026-10-23,13:00,Clausura,13,Universidad Técnica de Cajamarca,Melgar,1.0,2.0,finished
+16280853,2026-10-23,15:15,Clausura,13,Club Atlético Grau,Asociación Deportiva Tarma,1.0,1.0,finished
+16280855,2026-10-24,12:45,Clausura,13,Sport Huancayo,Alianza Atlético de Sullana,4.0,1.0,finished
+16280851,2026-10-24,15:15,Clausura,13,Cusco FC,Club Sporting Cristal,3.0,1.0,finished
+16280856,2026-10-24,20:30,Clausura,13,Universitario de Deportes,ACD Juan Pablo II,3.0,0.0,finished
+16280849,2026-10-25,11:00,Clausura,13,Comerciantes Unidos,Cienciano,3.0,1.0,finished
+16281144,2026-10-25,13:15,Clausura,13,CD Moquegua,Alianza Lima,0.0,1.0,finished
+16280854,2026-10-25,15:30,Clausura,13,Sport Boys,FC Cajamarca,4.0,2.0,finished
+17113008,2026-10-25,18:00,Clausura,13,Deportivo Garcilaso,Los Chankas CYC,4.0,1.0,finished
+16280862,2026-10-31,15:30,Clausura,15,Alianza Atlético de Sullana,ACD Juan Pablo II,1.0,0.0,finished
+16281148,2026-11-01,11:00,Clausura,15,CD Moquegua,Los Chankas CYC,0.0,0.0,finished
+16280870,2026-11-01,13:15,Clausura,15,Cusco FC,Sport Boys,0.0,1.0,finished
+16280868,2026-11-01,15:30,Clausura,15,Club Atlético Grau,Universitario de Deportes,1.0,3.0,finished
+16280865,2026-11-02,11:00,Clausura,15,Sport Huancayo,Melgar,2.0,0.0,finished
+16280867,2026-11-02,13:15,Clausura,15,Universidad Técnica de Cajamarca,Deportivo Garcilaso,2.0,3.0,finished
+16280869,2026-11-02,15:30,Clausura,15,Club Sporting Cristal,FC Cajamarca,5.0,0.0,finished
+17374076,2026-11-03,15:00,Clausura,15,Comerciantes Unidos,Asociación Deportiva Tarma,2.0,2.0,finished
+17374077,2026-11-03,20:00,Clausura,15,Alianza Lima,Cienciano,1.0,0.0,finished
+16280871,2026-11-06,15:00,Clausura,16,Club Atlético Grau,Cusco FC,3.0,0.0,finished
+16281150,2026-11-07,13:00,Clausura,16,Asociación Deportiva Tarma,Club Sporting Cristal,1.0,1.0,finished
+16281151,2026-11-07,15:30,Clausura,16,FC Cajamarca,Alianza Atlético de Sullana,2.0,0.0,finished
+16280872,2026-11-07,18:00,Clausura,16,Melgar,ACD Juan Pablo II,2.0,1.0,finished
+16280873,2026-11-07,20:30,Clausura,16,Cienciano,Sport Huancayo,1.0,2.0,finished
+16280874,2026-11-08,13:00,Clausura,16,Los Chankas CYC,Alianza Lima,1.0,1.0,finished
+16280875,2026-11-08,15:30,Clausura,16,Sport Boys,Universidad Técnica de Cajamarca,0.0,0.0,finished
+16281149,2026-11-08,18:00,Clausura,16,Deportivo Garcilaso,Comerciantes Unidos,0.0,0.0,finished
+16280876,2026-11-08,20:30,Clausura,16,Universitario de Deportes,CD Moquegua,2.0,2.0,finished
+16281160,2026-11-15,13:00,Clausura,17,Comerciantes Unidos,Sport Boys,,,notstarted
+16281155,2026-11-15,15:15,Clausura,17,ACD Juan Pablo II,Deportivo Garcilaso,,,notstarted
+17522423,2026-11-16,13:00,Clausura,17,Universidad Técnica de Cajamarca,Los Chankas CYC,,,notstarted
+16281152,2026-11-16,15:15,Clausura,17,CD Moquegua,Club Atlético Grau,,,notstarted
+16281154,2026-11-16,15:15,Clausura,17,Cusco FC,Asociación Deportiva Tarma,,,notstarted
+17488784,2026-11-18,15:00,Clausura,17,Alianza Atlético de Sullana,Melgar,,,notstarted
+17488786,2026-11-21,15:30,Clausura,17,Alianza Lima,FC Cajamarca,,,notstarted
+17488785,2026-11-22,15:00,Clausura,17,Club Sporting Cristal,Cienciano,,,notstarted
+17488787,2026-11-22,15:00,Clausura,17,Sport Huancayo,Universitario de Deportes,,,notstarted
