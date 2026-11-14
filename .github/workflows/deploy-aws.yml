@@ -39,7 +39,9 @@ jobs:
         IMAGE_TAG: latest
       run: |
         cd back
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        # Lambda solo acepta imagenes de un manifiesto: sin provenance/SBOM, Docker
+        # sube un indice OCI que update-function-code rechaza
+        docker build --platform linux/amd64 --provenance=false --sbom=false -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
     - name: Deploy new image to AWS Lambda
