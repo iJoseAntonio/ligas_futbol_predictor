@@ -134,6 +134,13 @@ function rowHora(row) {
   return (row['hora'] ?? row['Hora'] ?? '').trim();
 }
 
+function roundTitle(meta) {
+  if (meta.stage === 'Eliminatorias' && meta.displayNum === 1) {
+    return 'Eliminatorias · Semifinales';
+  }
+  return `${meta.stage} · Ronda ${meta.displayNum}`;
+}
+
 function loadMatchesCSV() {
   Papa.parse(MATCHES_CSV_PATH, {
     download: true,
@@ -422,7 +429,7 @@ async function openMatchView(m) {
 
   const meta = ROUND_META[currentRound] || {};
   document.getElementById('match-context-text').textContent =
-    meta.stage ? `${meta.stage} · Ronda ${meta.displayNum}` : 'Liga 1';
+    meta.stage ? roundTitle(meta) : 'Liga 1';
   document.querySelector('.layout').classList.remove('show-partidos');
   document.querySelector('.right-panel').classList.add('match-view-open');
   document.querySelector('.right-panel').scrollTop = 0;
@@ -799,12 +806,16 @@ function buildRoundSelect() {
   sel.innerHTML = '';
   Object.keys(ROUND_META)
     .map(Number)
-    .filter(r => ROUND_META[r].stage === stage)
+    .filter(r => {
+      const optionStage = ROUND_META[r].stage;
+      return optionStage === stage || optionStage === 'Eliminatorias' ||
+        (stage === 'Eliminatorias' && optionStage === 'Clausura');
+    })
     .sort((a, b) => b - a)   // más reciente primero
     .forEach(r => {
       const opt = document.createElement('option');
       opt.value = r;
-      opt.textContent = `${stage} Ronda ${ROUND_META[r].displayNum}`;
+      opt.textContent = roundTitle(ROUND_META[r]);
       if (r === currentRound) opt.selected = true;
       sel.appendChild(opt);
     });
@@ -977,7 +988,10 @@ async function renderPredictionsTab(round) {
   if (!container) return;
 
   const meta = ROUND_META[round] || {};
-  if (titleEl) titleEl.textContent = `${meta.stage || 'Liga 1'} — Ronda ${meta.displayNum ?? round}`;
+  if (titleEl) titleEl.textContent = roundTitle({
+    stage: meta.stage || 'Liga 1',
+    displayNum: meta.displayNum ?? round,
+  });
 
   const matches = MATCHES[round] || [];
   if (!matches.length) {
@@ -1781,6 +1795,7 @@ function computeFilteredStandings(filter) {
 
   Object.entries(MATCHES).forEach(([roundNum, roundMatches]) => {
     const stage = (ROUND_META[roundNum] || {}).stage;
+    if (stage === 'Eliminatorias') return;
     if (currentStage !== 'acumulado' && stage !== currentStage) return;
 
     roundMatches.forEach(m => {
