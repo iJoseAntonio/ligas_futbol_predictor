@@ -1,0 +1,2 @@
+- [AWS: consola, no CLI](feedback_aws_console_vs_cli.md) — para cambios de infra AWS, dar pasos de consola para que el usuario los haga él mismo; CLI solo para diagnóstico/lectura.
+- [Tesis: cap. V Validación](project_tesis_validacion.md) — estructura sin cap. Resultados, ubicación de anexos y archivos

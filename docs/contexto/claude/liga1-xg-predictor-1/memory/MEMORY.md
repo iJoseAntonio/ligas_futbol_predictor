@@ -1,0 +1,2 @@
+- [Rango de validacion de la tesis](validacion_rango_rondas.md) — corte del modelo 27/04/2026 (Apertura 12); rango del Cap. V en revision, recomendado todas las rondas post-corte
+- [Usuario: tesista Liga 1](usuario_tesis.md) — Jose, tesis ML Liga 1 Peru; responder en espanol, explicar con ejemplos de su proyecto
