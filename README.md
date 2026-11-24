@@ -3,6 +3,8 @@
 Modelo de Machine Learning para predicción de rendimiento ofensivo en ligas de fútbol, actualmente aplicado a la Liga 1 del Perú, con arquitectura pensada para escalar a otras ligas.
 Tesis — UNMSM, Facultad de Ingeniería de Sistemas e Informática.
 
+[Guía técnica del modelo predictivo, SMOTE, XGBoost, SHAP y evaluación estadística](README_MODELO.md)
+
 **Sitio:** https://xgfutbol.online
 
 ## Estructura
