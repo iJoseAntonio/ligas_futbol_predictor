@@ -1,13 +1,4 @@
 ﻿event_id,fecha,hora,fase,round,equipo_local,equipo_visitante,goles_local,goles_visitante,estado
-16281146,2026-10-27,15:00,Clausura,14,ACD Juan Pablo II,Sport Huancayo,2.0,0.0,finished
-16281147,2026-10-28,11:00,Clausura,14,Asociación Deportiva Tarma,CD Moquegua,2.0,0.0,finished
-16281145,2026-10-28,13:15,Clausura,14,FC Cajamarca,Universidad Técnica de Cajamarca,1.0,3.0,finished
-16280859,2026-10-28,15:30,Clausura,14,Alianza Atlético de Sullana,Deportivo Garcilaso,3.0,2.0,finished
-16280860,2026-10-28,19:00,Clausura,14,Cienciano,Club Atlético Grau,3.0,0.0,finished
-16280857,2026-10-29,13:00,Clausura,14,Los Chankas CYC,Cusco FC,0.0,1.0,finished
-16280858,2026-10-29,15:30,Clausura,14,Club Sporting Cristal,Alianza Lima,3.0,2.0,finished
-16280863,2026-10-29,19:30,Clausura,14,Melgar,Comerciantes Unidos,1.0,1.0,finished
-17373452,2026-11-04,20:30,Clausura,14,Universitario de Deportes,Sport Boys,,,notstarted
 16280847,2026-10-16,13:00,Clausura,12,Sport Huancayo,Cusco FC,2.0,1.0,finished
 16280843,2026-10-16,15:30,Clausura,12,Los Chankas CYC,Asociación Deportiva Tarma,2.0,1.0,finished
 16281143,2026-10-17,15:00,Clausura,12,ACD Juan Pablo II,Sport Boys,2.0,0.0,finished
@@ -53,3 +44,12 @@
 16280875,2026-11-08,15:30,Clausura,16,Sport Boys,Universidad Técnica de Cajamarca,0.0,0.0,finished
 16281149,2026-11-08,18:00,Clausura,16,Deportivo Garcilaso,Comerciantes Unidos,0.0,0.0,finished
 16280876,2026-11-08,20:30,Clausura,16,Universitario de Deportes,CD Moquegua,2.0,2.0,finished
+16281146,2026-10-27,15:00,Clausura,14,ACD Juan Pablo II,Sport Huancayo,2.0,0.0,finished
+16281147,2026-10-28,11:00,Clausura,14,Asociación Deportiva Tarma,CD Moquegua,2.0,0.0,finished
+16281145,2026-10-28,13:15,Clausura,14,FC Cajamarca,Universidad Técnica de Cajamarca,1.0,3.0,finished
+16280859,2026-10-28,15:30,Clausura,14,Alianza Atlético de Sullana,Deportivo Garcilaso,3.0,2.0,finished
+16280860,2026-10-28,19:00,Clausura,14,Cienciano,Club Atlético Grau,3.0,0.0,finished
+16280857,2026-10-29,13:00,Clausura,14,Los Chankas CYC,Cusco FC,0.0,1.0,finished
+16280858,2026-10-29,15:30,Clausura,14,Club Sporting Cristal,Alianza Lima,3.0,2.0,finished
+16280863,2026-10-29,19:30,Clausura,14,Melgar,Comerciantes Unidos,1.0,1.0,finished
+17373452,2026-11-04,20:30,Clausura,14,Universitario de Deportes,Sport Boys,2.0,2.0,finished
