@@ -18,7 +18,8 @@ el endpoint /lineups solo lee, sin volver a scrapear en cada peticion.
 Correr despues de cada actualizacion de jornada (junto con
 migrate_to_postgres.py y precompute_performance.py):
     cd back
-    python scrape_lineups.py
+    python scrape_lineups.py          # solo los partidos que faltan en el JSON
+    python scrape_lineups.py --todo   # vuelve a descargar todos
 """
 import json
 import os
@@ -78,7 +79,7 @@ def simplify_team(team_data: dict) -> dict:
     }
 
 
-def scrape():
+def scrape(todo=False):
     if not os.path.exists(CSV_PATH):
         print(f"ERROR: no se encontro {CSV_PATH}")
         return
@@ -99,9 +100,21 @@ def scrape():
     jugados["equipo_visitante"] = jugados["equipo_visitante"].map(normalizar_equipo)
     jugados = jugados[jugados["match_id"].notna()]
 
-    print(f"Partidos jugados con match_id: {len(jugados)} de {len(df)} totales en el fixture.")
-
+    # Solo se descargan los partidos que aun no estan en lineups_2026.json (--todo los rehace)
     results = []
+    if not todo and os.path.exists(OUT_PATH):
+        with open(OUT_PATH, encoding="utf-8") as f:
+            results = json.load(f)
+    ya = {(r["fecha"], r["home_team"], r["away_team"]) for r in results}
+    clave = jugados.apply(lambda r: (normalize_date(r["fecha"]), r["equipo_local"], r["equipo_visitante"]), axis=1)
+    faltan = jugados[~clave.isin(ya)]
+
+    print(f"Partidos jugados con match_id: {len(jugados)} de {len(df)} totales en el fixture.")
+    print(f"Ya tienen alineacion: {len(jugados) - len(faltan)} | por descargar: {len(faltan)}")
+    if faltan.empty:
+        return
+    jugados = faltan
+
     errores = []
 
     with sync_playwright() as p:
@@ -152,7 +165,7 @@ def scrape():
     with open(OUT_PATH, "w", encoding="utf-8") as f:
         json.dump(results, f, ensure_ascii=False)
 
-    print(f"\nOK: {len(results)} alineaciones guardadas -> {OUT_PATH}")
+    print(f"\nOK: {len(results)} alineaciones guardadas ({len(results) - len(ya)} nuevas) -> {OUT_PATH}")
     if errores:
         print(f"\n{len(errores)} partidos sin alineacion (normal si no hay datos en Sofascore para ese partido):")
         for e in errores:
@@ -160,4 +173,5 @@ def scrape():
 
 
 if __name__ == "__main__":
-    scrape()
+    import sys
+    scrape(todo="--todo" in sys.argv)
